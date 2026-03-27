@@ -5,6 +5,10 @@ const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const START_INDEX: Record<FirstDayOfWeek, number> = {
   sunday: 0,
   monday: 1,
+  tuesday: 2,
+  wednesday: 3,
+  thursday: 4,
+  friday: 5,
   saturday: 6,
 };
 

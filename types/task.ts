@@ -2,9 +2,16 @@ export type TaskStatus = 'todo' | 'done';
 
 export type ResetInterval = 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
 
-export type AppTheme = 'dark' | 'system';
+export type AppTheme = 'light' | 'dark' | 'system';
 export type TimeFormat = '12h' | '24h';
-export type FirstDayOfWeek = 'sunday' | 'monday' | 'saturday';
+export type FirstDayOfWeek =
+  | 'sunday'
+  | 'monday'
+  | 'tuesday'
+  | 'wednesday'
+  | 'thursday'
+  | 'friday'
+  | 'saturday';
 export type SnoozeDuration = 5 | 10 | 15 | 30;
 export type DefaultScreen = 'categories' | 'todos' | 'calendar' | 'statistics' | 'settings';
 export type Language = 'english' | 'spanish' | 'french';
@@ -29,14 +36,13 @@ export type Task = {
 export type Settings = {
   resetInterval: ResetInterval;
   lastResetAt: string | null;
+  statsResetAt: string | null;
   theme: AppTheme;
   amoledTheme: boolean;
-  dynamicColors: boolean;
-  showImages: boolean;
+  accentColor: string;
   timeFormat: TimeFormat;
   firstDayOfWeek: FirstDayOfWeek;
   snoozeDuration: SnoozeDuration;
-  screenPrivacy: boolean;
   defaultScreen: DefaultScreen;
   language: Language;
 };

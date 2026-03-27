@@ -16,7 +16,7 @@ export default function RootLayout() {
 
   const colorScheme = useColorScheme();
   const themePreference = useTaskStore((state) => state.settings.theme);
-  const resolvedTheme = themePreference === 'system' ? colorScheme : 'dark';
+  const resolvedTheme = themePreference === 'system' ? colorScheme : themePreference;
 
   return (
     <ThemeProvider value={resolvedTheme === 'light' ? DefaultTheme : DarkTheme}>
