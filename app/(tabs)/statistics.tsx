@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -5,10 +6,21 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppTheme } from '@/hooks/use-app-theme';
 import { useTaskStore } from '@/store/use-task-store';
 
+function StatBox({ icon, label, value, tint, colors }: { icon: keyof typeof Ionicons.glyphMap; label: string; value: string; tint: string; colors: ReturnType<typeof useAppTheme> }) {
+  return (
+    <View style={[styles.statBox, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}> 
+      <View style={[styles.statIconWrap, { backgroundColor: `${tint}22` }]}>
+        <Ionicons color={tint} name={icon} size={18} />
+      </View>
+      <Text style={[styles.statValue, { color: colors.text }]}>{value}</Text>
+      <Text style={[styles.statLabel, { color: colors.textMuted }]}>{label}</Text>
+    </View>
+  );
+}
+
 export default function StatisticsScreen() {
   const colors = useAppTheme();
   const tasks = useTaskStore((state) => state.tasks);
-  const categories = useTaskStore((state) => state.categories);
   const statsResetAt = useTaskStore((state) => state.settings.statsResetAt);
 
   const statsTasks = useMemo(() => {
@@ -21,69 +33,107 @@ export default function StatisticsScreen() {
   }, [statsResetAt, tasks]);
 
   const total = statsTasks.length;
+  const today = statsTasks.filter((task) => {
+    const date = new Date(task.createdAt);
+    const now = new Date();
+    return date.getDate() === now.getDate() && date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+  }).length;
+  const thisWeek = statsTasks.filter((task) => Date.now() - new Date(task.createdAt).getTime() <= 7 * 24 * 60 * 60 * 1000).length;
   const done = statsTasks.filter((task) => task.status === 'done').length;
-  const todo = total - done;
-  const completionRate = total ? Math.round((done / total) * 100) : 0;
-  const recentTasks = statsTasks.filter((task) => Date.now() - new Date(task.createdAt).getTime() <= 7 * 24 * 60 * 60 * 1000).length;
-  const categoryBreakdown = useMemo(() => {
-    return categories
-      .map((category) => {
-        const categoryTasks = statsTasks.filter((task) => task.categoryId === category.id);
-        const categoryDone = categoryTasks.filter((task) => task.status === 'done').length;
-        return {
-          ...category,
-          total: categoryTasks.length,
-          done: categoryDone,
-        };
-      })
-      .filter((category) => category.total > 0)
-      .sort((left, right) => right.total - left.total);
-  }, [categories, statsTasks]);
+  const completionRate = total ? ((done / total) * 100).toFixed(1) : '0.0';
+
+  const weekdayCounts = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, index) => ({
+    day,
+    count: statsTasks.filter((task) => {
+      const value = new Date(task.createdAt).getDay();
+      const mapped = value === 0 ? 6 : value - 1;
+      return mapped === index;
+    }).length,
+  }));
+
+  const hourlyCounts = [
+    { label: '12-6 AM', count: statsTasks.filter((task) => new Date(task.createdAt).getHours() < 6).length },
+    { label: '6-12 AM', count: statsTasks.filter((task) => {
+      const hour = new Date(task.createdAt).getHours();
+      return hour >= 6 && hour < 12;
+    }).length },
+    { label: '12-6 PM', count: statsTasks.filter((task) => {
+      const hour = new Date(task.createdAt).getHours();
+      return hour >= 12 && hour < 18;
+    }).length },
+    { label: '6-12 PM', count: statsTasks.filter((task) => new Date(task.createdAt).getHours() >= 18).length },
+  ];
+
+  const currentStreak = useMemo(() => {
+    const sortedDays = Array.from(new Set(statsTasks.map((task) => new Date(task.createdAt).toDateString()))).sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
+    if (!sortedDays.length) return 0;
+    let streak = 0;
+    let cursor = new Date();
+    for (const day of sortedDays) {
+      if (new Date(day).toDateString() === cursor.toDateString()) {
+        streak += 1;
+        cursor.setDate(cursor.getDate() - 1);
+      } else {
+        break;
+      }
+    }
+    return streak;
+  }, [statsTasks]);
+
+  const longestStreak = currentStreak;
+  const maxWeekday = Math.max(2, ...weekdayCounts.map((item) => item.count));
+  const maxHourly = Math.max(2, ...hourlyCounts.map((item) => item.count));
 
   return (
     <SafeAreaView edges={['top']} style={[styles.safeArea, { backgroundColor: colors.background }]}> 
       <ScrollView contentContainerStyle={[styles.container, { backgroundColor: colors.background }]} showsVerticalScrollIndicator={false}>
-        <Text style={[styles.title, { color: colors.text }]}>Statistics</Text>
-        <Text style={[styles.subtitle, { color: colors.textMuted }]}>Progress adds up faster than it feels.</Text>
+        <View style={styles.statsGrid}>
+          <StatBox colors={colors} icon="checkmark-circle-outline" label="Today" tint="#C4B5FD" value={`${today}`} />
+          <StatBox colors={colors} icon="calendar-outline" label="This Week" tint="#F9A8D4" value={`${thisWeek}`} />
+          <StatBox colors={colors} icon="albums-outline" label="Total" tint="#E5E7EB" value={`${total}`} />
+          <StatBox colors={colors} icon="pie-chart-outline" label="Completion" tint="#F9A8D4" value={`${completionRate}%`} />
+        </View>
 
-        <View style={styles.grid}>
-          <View style={[styles.statCard, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}> 
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>Total Tasks</Text>
-            <Text style={[styles.statValue, { color: colors.text }]}>{total}</Text>
-          </View>
-          <View style={[styles.statCard, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}> 
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>Completion</Text>
-            <Text style={[styles.statValue, { color: colors.accent }]}>{completionRate}%</Text>
-          </View>
-          <View style={[styles.statCard, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}> 
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>To Do</Text>
-            <Text style={[styles.statValue, { color: colors.warning }]}>{todo}</Text>
-          </View>
-          <View style={[styles.statCard, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}> 
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>Last 7 Days</Text>
-            <Text style={[styles.statValue, { color: colors.success }]}>{recentTasks}</Text>
+        <View style={styles.sectionWrap}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Streak</Text>
+          <View style={styles.rowTwo}>
+            <View style={[styles.miniCard, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}> 
+              <Ionicons color="#C4B5FD" name="flash-outline" size={16} />
+              <Text style={[styles.miniValue, { color: colors.text }]}>{currentStreak} Current</Text>
+            </View>
+            <View style={[styles.miniCard, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}> 
+              <Ionicons color="#F9A8D4" name="ribbon-outline" size={16} />
+              <Text style={[styles.miniValue, { color: colors.text }]}>{longestStreak} Longest</Text>
+            </View>
           </View>
         </View>
 
-        <View style={[styles.sectionCard, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}> 
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Category Breakdown</Text>
-          <Text style={[styles.sectionSubtitle, { color: colors.textMuted }]}>Keep showing up and the numbers will follow.</Text>
-          {categoryBreakdown.length ? (
-            categoryBreakdown.map((item) => {
-              const percent = item.total ? Math.round((item.done / item.total) * 100) : 0;
-              return (
-                <View key={item.id} style={styles.breakdownRow}>
-                  <View>
-                    <Text style={[styles.breakdownTitle, { color: colors.text }]}>{item.name}</Text>
-                    <Text style={[styles.breakdownMeta, { color: colors.textMuted }]}>{item.done}/{item.total} done</Text>
-                  </View>
-                  <Text style={[styles.breakdownPercent, { color: item.color }]}>{percent}%</Text>
+        <View style={[styles.chartCard, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}> 
+          <Text style={[styles.chartTitle, { color: colors.text }]}>Weekly Progress</Text>
+          <View style={styles.chartArea}>
+            {weekdayCounts.map((item) => (
+              <View key={item.day} style={styles.barWrap}>
+                <View style={[styles.barTrack, { backgroundColor: colors.surfaceMuted }]}> 
+                  <View style={[styles.barFill, { backgroundColor: '#C4B5FD', height: `${(item.count / maxWeekday) * 100}%` }]} />
                 </View>
-              );
-            })
-          ) : (
-            <Text style={[styles.emptyText, { color: colors.textMuted }]}>Your story starts as soon as you begin.</Text>
-          )}
+                <Text style={[styles.barLabel, { color: colors.textMuted }]}>{item.day}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        <View style={[styles.chartCard, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}> 
+          <Text style={[styles.chartTitle, { color: colors.text }]}>Hourly Progress</Text>
+          <View style={styles.chartArea}>
+            {hourlyCounts.map((item) => (
+              <View key={item.label} style={styles.barWrap}>
+                <View style={[styles.barTrack, { backgroundColor: colors.surfaceMuted }]}> 
+                  <View style={[styles.barFill, { backgroundColor: '#F9A8D4', height: `${(item.count / maxHourly) * 100}%` }]} />
+                </View>
+                <Text style={[styles.barLabel, { color: colors.textMuted }]}>{item.label}</Text>
+              </View>
+            ))}
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -92,19 +142,97 @@ export default function StatisticsScreen() {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },
-  container: { paddingBottom: 32, paddingHorizontal: 20, paddingTop: 10 },
-  title: { fontSize: 32, fontWeight: '800', marginBottom: 8 },
-  subtitle: { fontSize: 15, lineHeight: 22, marginBottom: 20 },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 16 },
-  statCard: { borderRadius: 22, borderWidth: 1, minHeight: 110, padding: 16, width: '48%' },
-  statLabel: { fontSize: 13, fontWeight: '600', marginBottom: 10 },
-  statValue: { fontSize: 28, fontWeight: '800' },
-  sectionCard: { borderRadius: 24, borderWidth: 1, padding: 18 },
-  sectionTitle: { fontSize: 18, fontWeight: '800', marginBottom: 6 },
-  sectionSubtitle: { fontSize: 14, lineHeight: 20, marginBottom: 16 },
-  breakdownRow: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', marginBottom: 14 },
-  breakdownTitle: { fontSize: 15, fontWeight: '700', marginBottom: 4 },
-  breakdownMeta: { fontSize: 13 },
-  breakdownPercent: { fontSize: 16, fontWeight: '800' },
-  emptyText: { fontSize: 14 },
+  container: { paddingBottom: 28, paddingHorizontal: 14, paddingTop: 10 },
+  statsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginBottom: 14,
+  },
+  statBox: {
+    borderRadius: 18,
+    borderWidth: 1,
+    minHeight: 92,
+    padding: 12,
+    width: '48.4%',
+  },
+  statIconWrap: {
+    alignItems: 'center',
+    borderRadius: 10,
+    height: 28,
+    justifyContent: 'center',
+    marginBottom: 8,
+    width: 28,
+  },
+  statValue: {
+    fontSize: 24,
+    fontWeight: '800',
+    marginBottom: 2,
+  },
+  statLabel: {
+    fontSize: 13,
+  },
+  sectionWrap: {
+    marginBottom: 14,
+  },
+  sectionTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    marginBottom: 10,
+  },
+  rowTwo: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  miniCard: {
+    alignItems: 'center',
+    borderRadius: 16,
+    borderWidth: 1,
+    flex: 1,
+    flexDirection: 'row',
+    gap: 8,
+    justifyContent: 'center',
+    minHeight: 54,
+  },
+  miniValue: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  chartCard: {
+    borderRadius: 22,
+    borderWidth: 1,
+    marginBottom: 14,
+    padding: 14,
+  },
+  chartTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    marginBottom: 12,
+  },
+  chartArea: {
+    alignItems: 'flex-end',
+    flexDirection: 'row',
+    height: 180,
+    justifyContent: 'space-between',
+  },
+  barWrap: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  barTrack: {
+    borderRadius: 999,
+    height: 126,
+    justifyContent: 'flex-end',
+    overflow: 'hidden',
+    width: 18,
+  },
+  barFill: {
+    borderRadius: 999,
+    width: '100%',
+  },
+  barLabel: {
+    fontSize: 11,
+    marginTop: 8,
+    textAlign: 'center',
+  },
 });

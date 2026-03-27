@@ -3,163 +3,234 @@ import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { EmptyState } from '@/components/empty-state';
-import { TaskItem } from '@/components/task-item';
+import { FloatingActionButton } from '@/components/floating-action-button';
 import { useAppTheme } from '@/hooks/use-app-theme';
 import { useTaskStore } from '@/store/use-task-store';
 import { getMonthGrid, getWeekdayLabels } from '@/utils/calendar';
 import { formatMonthLabel, toDayKey } from '@/utils/date';
-import { runListAnimation } from '@/utils/layout-animation';
 
 const GRID_COLUMNS = 7;
-const GRID_GAP = 8;
-const CARD_HORIZONTAL_PADDING = 32;
+const GRID_GAP = 10;
+const CARD_HORIZONTAL_PADDING = 28;
+
+type FilterTab = 'todo' | 'done';
 
 export default function CalendarScreen() {
   const colors = useAppTheme();
   const { width } = useWindowDimensions();
   const tasks = useTaskStore((state) => state.tasks);
   const settings = useTaskStore((state) => state.settings);
-  const toggleTaskStatus = useTaskStore((state) => state.toggleTaskStatus);
-  const deleteTask = useTaskStore((state) => state.deleteTask);
 
   const [currentMonth, setCurrentMonth] = useState(() => new Date());
   const [selectedDay, setSelectedDay] = useState(() => toDayKey(new Date()));
+  const [activeFilter, setActiveFilter] = useState<FilterTab>('todo');
 
   const weekdayLabels = useMemo(() => getWeekdayLabels(settings.firstDayOfWeek), [settings.firstDayOfWeek]);
   const monthGrid = useMemo(() => getMonthGrid(currentMonth, settings.firstDayOfWeek), [currentMonth, settings.firstDayOfWeek]);
-  const taskCountByDay = useMemo(() => {
-    return tasks.reduce<Record<string, number>>((acc, task) => {
-      const key = toDayKey(task.createdAt);
-      acc[key] = (acc[key] ?? 0) + 1;
-      return acc;
-    }, {});
-  }, [tasks]);
-  const selectedTasks = useMemo(() => tasks.filter((task) => toDayKey(task.createdAt) === selectedDay), [selectedDay, tasks]);
+  const selectedTasks = useMemo(() => {
+    return tasks.filter((task) => toDayKey(task.createdAt) === selectedDay && task.status === activeFilter);
+  }, [activeFilter, selectedDay, tasks]);
 
-  const availableGridWidth = Math.max(width - CARD_HORIZONTAL_PADDING - 40, 280);
+  const availableGridWidth = Math.max(width - CARD_HORIZONTAL_PADDING - 24, 280);
   const daySize = Math.floor((availableGridWidth - GRID_GAP * (GRID_COLUMNS - 1)) / GRID_COLUMNS);
 
   return (
     <SafeAreaView edges={['top']} style={[styles.safeArea, { backgroundColor: colors.background }]}> 
-      <ScrollView contentContainerStyle={[styles.container, { backgroundColor: colors.background }]} showsVerticalScrollIndicator={false}>
-        <Text style={[styles.title, { color: colors.text }]}>Calendar</Text>
-        <Text style={[styles.subtitle, { color: colors.textMuted }]}>Every day is a clean square waiting for progress.</Text>
-
-        <View style={[styles.calendarCard, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}> 
-          <View style={styles.monthHeader}>
-            <Pressable onPress={() => setCurrentMonth((value) => new Date(value.getFullYear(), value.getMonth() - 1, 1))} style={[styles.monthButton, { backgroundColor: colors.surfaceMuted }]}>
-              <Ionicons name="chevron-back" size={18} color={colors.text} />
-            </Pressable>
-            <Text style={[styles.monthTitle, { color: colors.text }]}>{formatMonthLabel(currentMonth)}</Text>
-            <Pressable onPress={() => setCurrentMonth((value) => new Date(value.getFullYear(), value.getMonth() + 1, 1))} style={[styles.monthButton, { backgroundColor: colors.surfaceMuted }]}>
-              <Ionicons name="chevron-forward" size={18} color={colors.text} />
-            </Pressable>
-          </View>
-
-          <View style={styles.weekRow}>
-            {weekdayLabels.map((label) => (
-              <Text key={label} style={[styles.weekday, { color: colors.textMuted }]}>{label}</Text>
-            ))}
-          </View>
-
-          <View style={[styles.grid, { gap: GRID_GAP }]}> 
-            {monthGrid.map((cell) => {
-              const count = taskCountByDay[cell.key] ?? 0;
-              const selected = cell.key === selectedDay;
-              const labelColor = selected ? '#FFFFFF' : cell.inCurrentMonth ? colors.text : colors.textMuted;
-              const countColor = selected ? '#FFFFFF' : colors.textMuted;
-
-              return (
-                <Pressable
-                  key={cell.key}
-                  onPress={() => setSelectedDay(cell.key)}
-                  style={[
-                    styles.dayCell,
-                    {
-                      backgroundColor: selected ? colors.accent : colors.surfaceMuted,
-                      borderColor: selected ? colors.accent : colors.border,
-                      height: daySize,
-                      opacity: cell.inCurrentMonth ? 1 : 0.58,
-                      width: daySize,
-                    },
-                  ]}>
-                  <Text style={[styles.dayNumber, { color: labelColor }]}>{cell.date.getDate()}</Text>
-                  {count ? <Text style={[styles.dayCount, { color: countColor }]}>{count}</Text> : null}
-                </Pressable>
-              );
-            })}
-          </View>
+      <View style={[styles.container, { backgroundColor: colors.background }]}> 
+        <View style={styles.header}>
+          <Pressable onPress={() => setCurrentMonth((value) => new Date(value.getFullYear(), value.getMonth() - 1, 1))} style={styles.headerIcon}>
+            <Ionicons name="chevron-back" size={20} color={colors.text} />
+          </Pressable>
+          <Text style={[styles.monthTitle, { color: colors.text }]}>{formatMonthLabel(currentMonth)}</Text>
+          <Pressable style={[styles.modePill, { backgroundColor: colors.surfaceMuted, borderColor: colors.border }]}> 
+            <Text style={[styles.modeText, { color: colors.textMuted }]}>Month</Text>
+          </Pressable>
+          <Pressable onPress={() => setCurrentMonth((value) => new Date(value.getFullYear(), value.getMonth() + 1, 1))} style={styles.headerIcon}>
+            <Ionicons name="chevron-forward" size={20} color={colors.text} />
+          </Pressable>
         </View>
 
-        <View style={[styles.dayCard, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}> 
-          <Text style={[styles.dayTitle, { color: colors.text }]}>Tasks on {selectedDay}</Text>
-          <Text style={[styles.daySubtitle, { color: colors.textMuted }]}>{selectedTasks.length} tasks found</Text>
+        <View style={styles.weekRow}>
+          {weekdayLabels.map((label) => (
+            <Text key={label} style={[styles.weekday, { color: colors.textMuted }]}>{label}</Text>
+          ))}
         </View>
 
-        {selectedTasks.length ? (
-          selectedTasks.map((task) => (
-            <TaskItem
-              key={task.id}
-              task={task}
-              onDelete={(id) => {
-                runListAnimation();
-                deleteTask(id);
-              }}
-              onToggle={(id) => {
-                runListAnimation();
-                toggleTaskStatus(id);
-              }}
-            />
-          ))
-        ) : (
-          <EmptyState title="No tasks for this day" description="A quiet day is space for your next win." />
-        )}
-      </ScrollView>
+        <View style={[styles.grid, { gap: GRID_GAP }]}> 
+          {monthGrid.map((cell) => {
+            const selected = cell.key === selectedDay;
+            const labelColor = selected ? '#1C1A24' : cell.inCurrentMonth ? colors.text : colors.textMuted;
+
+            return (
+              <Pressable
+                key={cell.key}
+                onPress={() => setSelectedDay(cell.key)}
+                style={[
+                  styles.dayCell,
+                  {
+                    backgroundColor: selected ? '#C7C4FF' : 'transparent',
+                    height: daySize,
+                    width: daySize,
+                  },
+                ]}>
+                <Text style={[styles.dayNumber, { color: labelColor }]}>{cell.date.getDate()}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+
+        <View style={styles.tabRow}>
+          <Pressable onPress={() => setActiveFilter('todo')} style={styles.tabButton}>
+            <Text style={[styles.tabLabel, { color: activeFilter === 'todo' ? colors.text : colors.textMuted }]}>Doing</Text>
+            {activeFilter === 'todo' ? <View style={styles.tabIndicator} /> : null}
+          </Pressable>
+          <Pressable onPress={() => setActiveFilter('done')} style={styles.tabButton}>
+            <Text style={[styles.tabLabel, { color: activeFilter === 'done' ? colors.text : colors.textMuted }]}>Done</Text>
+            {activeFilter === 'done' ? <View style={styles.tabIndicator} /> : null}
+          </Pressable>
+          <Pressable style={styles.filterButton}>
+            <Ionicons name="filter-outline" size={18} color={colors.textMuted} />
+          </Pressable>
+        </View>
+
+        <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
+          {selectedTasks.length ? (
+            selectedTasks.map((task) => (
+              <View key={task.id} style={[styles.todoCard, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}> 
+                <Text style={[styles.todoTitle, { color: colors.text }]}>{task.title}</Text>
+              </View>
+            ))
+          ) : (
+            <View style={styles.emptyBlock}>
+              <View style={[styles.emptyIconWrap, { backgroundColor: `${colors.accent}33` }]}>
+                <Ionicons name="calendar-outline" size={34} color="#D6D4FF" />
+              </View>
+              <Text style={[styles.emptyTitle, { color: colors.text }]}>Add a Todo</Text>
+              <Text style={[styles.emptyText, { color: colors.textMuted }]}>Todos with deadlines will appear here</Text>
+            </View>
+          )}
+        </ScrollView>
+
+        <FloatingActionButton onPress={() => {}} />
+      </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },
-  container: { paddingBottom: 32, paddingHorizontal: 20, paddingTop: 10 },
-  title: { fontSize: 32, fontWeight: '800', marginBottom: 8 },
-  subtitle: { fontSize: 15, lineHeight: 22, marginBottom: 20 },
-  calendarCard: { borderRadius: 28, borderWidth: 1, marginBottom: 16, padding: 16 },
-  monthHeader: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 },
-  monthButton: {
+  container: { flex: 1, paddingHorizontal: 14, paddingTop: 8 },
+  header: {
     alignItems: 'center',
-    borderRadius: 16,
-    height: 36,
-    justifyContent: 'center',
-    width: 36,
+    flexDirection: 'row',
+    marginBottom: 14,
   },
-  monthTitle: { fontSize: 18, fontWeight: '800' },
-  weekRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
-  weekday: { flex: 1, fontSize: 12, fontWeight: '700', textAlign: 'center' },
-  grid: { flexDirection: 'row', flexWrap: 'wrap' },
+  headerIcon: {
+    padding: 6,
+  },
+  monthTitle: {
+    flex: 1,
+    fontSize: 18,
+    fontWeight: '800',
+    textAlign: 'center',
+  },
+  modePill: {
+    borderRadius: 14,
+    borderWidth: 1,
+    marginRight: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  modeText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  weekRow: {
+    flexDirection: 'row',
+    marginBottom: 10,
+  },
+  weekday: {
+    flex: 1,
+    fontSize: 12,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: 18,
+  },
   dayCell: {
     alignItems: 'center',
     borderRadius: 999,
-    borderWidth: 1,
     justifyContent: 'center',
-    position: 'relative',
   },
   dayNumber: {
-    fontSize: 15,
-    fontWeight: '800',
-    lineHeight: 18,
-    marginTop: -4,
+    fontSize: 18,
+    fontWeight: '600',
     textAlign: 'center',
   },
-  dayCount: {
-    bottom: 10,
-    fontSize: 10,
-    fontWeight: '700',
+  tabRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    marginBottom: 8,
+  },
+  tabButton: {
+    marginRight: 24,
+    paddingBottom: 12,
+    position: 'relative',
+  },
+  tabLabel: {
+    fontSize: 17,
+    fontWeight: '500',
+  },
+  tabIndicator: {
+    backgroundColor: '#C4B5FD',
+    borderRadius: 999,
+    bottom: 0,
+    height: 4,
+    left: 0,
     position: 'absolute',
+    width: 36,
+  },
+  filterButton: {
+    marginLeft: 'auto',
+    padding: 8,
+  },
+  body: {
+    flexGrow: 1,
+    paddingBottom: 96,
+  },
+  todoCard: {
+    borderRadius: 18,
+    borderWidth: 1,
+    marginBottom: 12,
+    padding: 14,
+  },
+  todoTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  emptyBlock: {
+    alignItems: 'center',
+    paddingTop: 48,
+  },
+  emptyIconWrap: {
+    alignItems: 'center',
+    borderRadius: 40,
+    height: 80,
+    justifyContent: 'center',
+    marginBottom: 20,
+    width: 80,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    marginBottom: 8,
+  },
+  emptyText: {
+    fontSize: 15,
     textAlign: 'center',
   },
-  dayCard: { borderRadius: 22, borderWidth: 1, marginBottom: 14, padding: 16 },
-  dayTitle: { fontSize: 18, fontWeight: '700', marginBottom: 4 },
-  daySubtitle: { fontSize: 13 },
 });
+

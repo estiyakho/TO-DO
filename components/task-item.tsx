@@ -20,37 +20,38 @@ function TaskItemComponent({ task, onToggle, onDelete }: TaskItemProps) {
   const done = task.status === 'done';
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}> 
+    <View style={[styles.card, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}> 
       <Pressable onPress={() => onToggle(task.id)} style={styles.content}>
-        <View style={[styles.checkbox, { borderColor: colors.border }, done && { backgroundColor: colors.accent, borderColor: colors.accent }]}>
-          {done ? <Ionicons name="checkmark" size={16} color="#F8FAFC" /> : null}
+        <View style={[styles.checkbox, { borderColor: done ? colors.accent : colors.textMuted, backgroundColor: done ? colors.accent : 'transparent' }]}>
+          {done ? <Ionicons name="checkmark" size={14} color="#F8FAFC" /> : null}
         </View>
         <View style={styles.textBlock}>
-          <Text numberOfLines={1} style={[styles.title, { color: colors.text }, done && { color: colors.textMuted }]}>
+          <Text numberOfLines={1} style={[styles.title, { color: colors.text }, done && { color: colors.textMuted, textDecorationLine: 'line-through' }]}>
             {task.title}
           </Text>
-          {task.description ? (
-            <Text numberOfLines={2} style={[styles.description, { color: colors.textSoft }]}>
-              {task.description}
-            </Text>
-          ) : null}
-          <View style={styles.metaRow}>
+          <View style={styles.metaWrap}>
             {category ? (
-              <View style={[styles.badge, { borderColor: colors.border }]}>
-                <Ionicons name={category.icon as keyof typeof Ionicons.glyphMap} size={12} color={category.color} />
-                <Text style={[styles.badgeText, { color: colors.textMuted }]}>{category.name}</Text>
+              <View style={[styles.badge, { backgroundColor: `${category.color}22`, borderColor: `${category.color}44` }]}>
+                <View style={[styles.badgeDot, { backgroundColor: category.color }]} />
+                <Text style={[styles.badgeText, { color: category.color }]}>{category.name}</Text>
               </View>
             ) : null}
-            <Text style={[styles.timestamp, { color: colors.textMuted }]}>
-              {formatTaskDate(task.createdAt, timeFormat)}
-            </Text>
+            <View style={styles.createdRow}>
+              <Ionicons name="time-outline" size={12} color={colors.textMuted} />
+              <Text style={[styles.timestamp, { color: colors.textMuted }]}>Created: {formatTaskDate(task.createdAt, timeFormat)}</Text>
+            </View>
           </View>
         </View>
       </Pressable>
 
-      <Pressable hitSlop={8} onPress={() => onDelete(task.id)} style={styles.deleteButton}>
-        <Ionicons name="trash-outline" size={18} color={colors.danger} />
-      </Pressable>
+      <View style={styles.rightColumn}>
+        <View style={[styles.countPill, { backgroundColor: colors.surfaceMuted }]}>
+          <Text style={[styles.countText, { color: colors.textMuted }]}>{done ? '1/1' : '0/1'}</Text>
+        </View>
+        <Pressable hitSlop={8} onPress={() => onDelete(task.id)} style={styles.deleteButton}>
+          <Ionicons name="trash-outline" size={16} color={colors.textMuted} />
+        </Pressable>
+      </View>
     </View>
   );
 }
@@ -59,16 +60,15 @@ export const TaskItem = memo(TaskItemComponent);
 
 const styles = StyleSheet.create({
   card: {
-    alignItems: 'center',
-    borderRadius: 20,
+    borderRadius: 22,
     borderWidth: 1,
     flexDirection: 'row',
     marginBottom: 12,
+    minHeight: 92,
     paddingHorizontal: 14,
     paddingVertical: 14,
   },
   content: {
-    alignItems: 'flex-start',
     flex: 1,
     flexDirection: 'row',
   },
@@ -78,48 +78,65 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     height: 22,
     justifyContent: 'center',
-    marginRight: 14,
-    marginTop: 2,
+    marginRight: 12,
+    marginTop: 6,
     width: 22,
   },
   textBlock: {
     flex: 1,
   },
   title: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '700',
-    marginBottom: 4,
-  },
-  description: {
-    fontSize: 14,
-    lineHeight: 20,
     marginBottom: 8,
   },
-  metaRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+  metaWrap: {
     gap: 8,
   },
   badge: {
     alignItems: 'center',
-    borderRadius: 999,
+    alignSelf: 'flex-start',
+    borderRadius: 12,
     borderWidth: 1,
     flexDirection: 'row',
-    gap: 6,
     paddingHorizontal: 10,
-    paddingVertical: 5,
+    paddingVertical: 4,
+  },
+  badgeDot: {
+    borderRadius: 4,
+    height: 8,
+    marginRight: 6,
+    width: 8,
   },
   badgeText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
+  },
+  createdRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
   },
   timestamp: {
     fontSize: 12,
-    fontWeight: '500',
+    marginLeft: 4,
+  },
+  rightColumn: {
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    marginLeft: 12,
+  },
+  countPill: {
+    borderRadius: 14,
+    minWidth: 52,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  countText: {
+    fontSize: 13,
+    fontWeight: '700',
+    textAlign: 'center',
   },
   deleteButton: {
-    marginLeft: 12,
-    padding: 6,
+    padding: 4,
   },
 });

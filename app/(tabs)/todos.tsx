@@ -1,11 +1,11 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import { EmptyState } from '@/components/empty-state';
 import { FloatingActionButton } from '@/components/floating-action-button';
-import { SegmentedControl } from '@/components/segmented-control';
 import { TaskItem } from '@/components/task-item';
 import { useAppTheme } from '@/hooks/use-app-theme';
 import { useTaskStore } from '@/store/use-task-store';
@@ -13,7 +13,7 @@ import { TaskStatus } from '@/types/task';
 import { runListAnimation } from '@/utils/layout-animation';
 
 const FILTER_OPTIONS: { label: string; value: TaskStatus }[] = [
-  { label: 'To Do', value: 'todo' },
+  { label: 'Doing', value: 'todo' },
   { label: 'Done', value: 'done' },
 ];
 
@@ -30,6 +30,7 @@ export default function TodosScreen() {
   const initialCategory = Array.isArray(params.categoryId) ? params.categoryId[0] : params.categoryId;
   const [activeFilter, setActiveFilter] = useState<TaskStatus>('todo');
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('all');
+  const [query, setQuery] = useState('');
 
   useEffect(() => {
     if (initialCategory) {
@@ -38,52 +39,55 @@ export default function TodosScreen() {
   }, [initialCategory]);
 
   const filteredTasks = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase();
+
     return tasks.filter((task) => {
       const matchesStatus = task.status === activeFilter;
       const matchesCategory = selectedCategoryId === 'all' ? true : task.categoryId === selectedCategoryId;
-      return matchesStatus && matchesCategory;
+      const matchesQuery = !normalizedQuery || task.title.toLowerCase().includes(normalizedQuery);
+      return matchesStatus && matchesCategory && matchesQuery;
     });
-  }, [activeFilter, selectedCategoryId, tasks]);
-
-  const todoCount = tasks.filter((task) => task.status === 'todo').length;
-  const doneCount = tasks.length - todoCount;
-  const activeCategory = categories.find((category) => category.id === selectedCategoryId);
+  }, [activeFilter, query, selectedCategoryId, tasks]);
 
   return (
-    <SafeAreaView edges={['top']} style={[styles.safeArea, { backgroundColor: colors.background }]}>
+    <SafeAreaView edges={['top']} style={[styles.safeArea, { backgroundColor: colors.background }]}> 
       <View style={[styles.container, { backgroundColor: colors.background }]}> 
-        <Text style={[styles.title, { color: colors.text }]}>All Todos</Text>
-        <Text style={[styles.subtitle, { color: colors.textMuted }]}>Small steps still move things forward.</Text>
-
-        <View style={[styles.summaryCard, { backgroundColor: colors.surface, borderColor: colors.border }]}> 
-          <View>
-            <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>Status</Text>
-            <Text style={[styles.summaryValue, { color: colors.text }]}>{todoCount} pending</Text>
-          </View>
-          <Text style={[styles.summaryMeta, { color: colors.textSoft }]}>{doneCount} completed</Text>
+        <View style={[styles.searchBar, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}> 
+          <Ionicons color={colors.textMuted} name="search-outline" size={24} />
+          <TextInput
+            onChangeText={setQuery}
+            placeholder="Search Todo"
+            placeholderTextColor={colors.textMuted}
+            style={[styles.searchInput, { color: colors.text }]}
+            value={query}
+          />
         </View>
 
-        <SegmentedControl options={FILTER_OPTIONS} value={activeFilter} onChange={setActiveFilter} />
+        <View style={styles.tabRow}>
+          {FILTER_OPTIONS.map((option) => {
+            const active = option.value === activeFilter;
+            return (
+              <Pressable key={option.value} onPress={() => setActiveFilter(option.value)} style={styles.tabButton}>
+                <Text style={[styles.tabLabel, { color: active ? colors.text : colors.textMuted }]}>{option.label}</Text>
+                {active ? <View style={[styles.tabIndicator, { backgroundColor: '#C4B5FD' }]} /> : null}
+              </Pressable>
+            );
+          })}
+          <Pressable style={styles.filterButton} onPress={() => setSelectedCategoryId('all')}>
+            <Ionicons name="filter-outline" size={18} color={colors.textMuted} />
+          </Pressable>
+        </View>
 
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsRow} contentContainerStyle={styles.chipsContent}>
-          <Pressable
-            onPress={() => setSelectedCategoryId('all')}
-            style={[styles.chip, { backgroundColor: selectedCategoryId === 'all' ? colors.accent : colors.surfaceMuted }]}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipsContent} style={styles.chipsRow}>
+          <Pressable onPress={() => setSelectedCategoryId('all')} style={[styles.chip, { backgroundColor: selectedCategoryId === 'all' ? colors.accent : colors.surfaceMuted }]}>
             <Text style={styles.chipText}>All</Text>
           </Pressable>
           {categories.map((category) => (
-            <Pressable
-              key={category.id}
-              onPress={() => setSelectedCategoryId(category.id)}
-              style={[styles.chip, { backgroundColor: selectedCategoryId === category.id ? category.color : colors.surfaceMuted }]}>
+            <Pressable key={category.id} onPress={() => setSelectedCategoryId(category.id)} style={[styles.chip, { backgroundColor: selectedCategoryId === category.id ? category.color : colors.surfaceMuted }]}>
               <Text style={styles.chipText}>{category.name}</Text>
             </Pressable>
           ))}
         </ScrollView>
-
-        {activeCategory ? (
-          <Text style={[styles.filterHint, { color: colors.textMuted }]}>Showing {activeFilter} tasks in {activeCategory.name}</Text>
-        ) : null}
 
         <ScrollView contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false}>
           {filteredTasks.length ? (
@@ -102,7 +106,7 @@ export default function TodosScreen() {
               />
             ))
           ) : (
-            <EmptyState title="No tasks in this view" description="Pick one thing and get it moving." />
+            <EmptyState title="Add a Todo" description="Your focused tasks will show here." />
           )}
         </ScrollView>
 
@@ -114,26 +118,69 @@ export default function TodosScreen() {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },
-  container: { flex: 1, paddingHorizontal: 20 },
-  title: { fontSize: 32, fontWeight: '800', marginBottom: 8, marginTop: 10 },
-  subtitle: { fontSize: 15, lineHeight: 22, marginBottom: 20 },
-  summaryCard: {
+  container: { flex: 1, paddingHorizontal: 14, paddingTop: 6 },
+  searchBar: {
     alignItems: 'center',
-    borderRadius: 24,
+    borderRadius: 20,
     borderWidth: 1,
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-    paddingHorizontal: 18,
-    paddingVertical: 18,
+    marginBottom: 14,
+    minHeight: 58,
+    paddingHorizontal: 16,
   },
-  summaryLabel: { fontSize: 13, fontWeight: '600', marginBottom: 6 },
-  summaryValue: { fontSize: 20, fontWeight: '800' },
-  summaryMeta: { fontSize: 14, fontWeight: '600' },
-  chipsRow: { marginTop: 14, maxHeight: 44 },
-  chipsContent: { alignItems: 'center', gap: 10, paddingRight: 16 },
-  chip: { borderRadius: 999, paddingHorizontal: 14, paddingVertical: 10 },
-  chipText: { color: '#F8FAFC', fontSize: 13, fontWeight: '700' },
-  filterHint: { fontSize: 13, marginTop: 12 },
-  listContent: { flexGrow: 1, paddingBottom: 100, paddingTop: 16 },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    marginLeft: 10,
+  },
+  tabRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    marginBottom: 8,
+  },
+  tabButton: {
+    marginRight: 24,
+    paddingBottom: 12,
+    position: 'relative',
+  },
+  tabLabel: {
+    fontSize: 17,
+    fontWeight: '500',
+  },
+  tabIndicator: {
+    borderRadius: 999,
+    bottom: 0,
+    height: 4,
+    left: 0,
+    position: 'absolute',
+    width: 36,
+  },
+  filterButton: {
+    marginLeft: 'auto',
+    padding: 8,
+  },
+  chipsRow: {
+    marginBottom: 10,
+    maxHeight: 40,
+  },
+  chipsContent: {
+    alignItems: 'center',
+    gap: 8,
+    paddingRight: 12,
+  },
+  chip: {
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  chipText: {
+    color: '#F8FAFC',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  listContent: {
+    flexGrow: 1,
+    paddingBottom: 96,
+    paddingTop: 2,
+  },
 });
