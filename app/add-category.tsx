@@ -3,6 +3,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -20,6 +21,7 @@ export default function AddCategoryScreen() {
   const colors = useAppTheme();
   const addCategory = useTaskStore((state) => state.addCategory);
   const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
 
   const trimmedName = name.trim();
 
@@ -28,7 +30,7 @@ export default function AddCategoryScreen() {
       return;
     }
 
-    addCategory(trimmedName);
+    addCategory({ name: trimmedName, description });
     router.back();
   };
 
@@ -36,7 +38,7 @@ export default function AddCategoryScreen() {
     <SafeAreaView edges={['top']} style={[styles.safeArea, { backgroundColor: colors.background }]}>
       <Stack.Screen options={{ presentation: 'modal', title: 'Add Category' }} />
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.flex}>
-        <View style={[styles.container, { backgroundColor: colors.background }]}> 
+        <ScrollView contentContainerStyle={[styles.container, { backgroundColor: colors.background }]} keyboardShouldPersistTaps="handled">
           <Text style={[styles.title, { color: colors.text }]}>New category</Text>
           <Text style={[styles.subtitle, { color: colors.textMuted }]}>Name the spaces where your best work happens.</Text>
 
@@ -50,6 +52,18 @@ export default function AddCategoryScreen() {
             value={name}
           />
 
+          <Text style={[styles.label, styles.descriptionLabel, { color: colors.textSoft }]}>Description</Text>
+          <TextInput
+            multiline
+            numberOfLines={4}
+            onChangeText={setDescription}
+            placeholder="A short note for this category"
+            placeholderTextColor="#64748B"
+            style={[styles.input, styles.textArea, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.text }]}
+            textAlignVertical="top"
+            value={description}
+          />
+
           <View style={styles.footer}>
             <Pressable onPress={() => router.back()} style={[styles.secondaryButton, { backgroundColor: colors.surface, borderColor: colors.border }]}>
               <Text style={[styles.secondaryButtonText, { color: colors.textSoft }]}>Cancel</Text>
@@ -58,7 +72,7 @@ export default function AddCategoryScreen() {
               <Text style={styles.primaryButtonText}>Save Category</Text>
             </Pressable>
           </View>
-        </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -67,12 +81,14 @@ export default function AddCategoryScreen() {
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },
   flex: { flex: 1 },
-  container: { flex: 1, paddingHorizontal: 20, paddingTop: 12, paddingBottom: 24 },
+  container: { flexGrow: 1, paddingHorizontal: 20, paddingTop: 12, paddingBottom: 24 },
   title: { fontFamily: AppFonts.bold, fontSize: 30, marginBottom: 8 },
   subtitle: { fontFamily: AppFonts.medium, fontSize: 15, lineHeight: 22, marginBottom: 24 },
   label: { fontFamily: AppFonts.semibold, fontSize: 14, marginBottom: 10 },
+  descriptionLabel: { marginTop: 18 },
   input: { borderRadius: 18, borderWidth: 1, fontFamily: AppFonts.medium, fontSize: 16, paddingHorizontal: 16, paddingVertical: 14 },
-  footer: { flexDirection: 'row', gap: 12, marginTop: 'auto' },
+  textArea: { minHeight: 120 },
+  footer: { flexDirection: 'row', gap: 12, marginTop: 'auto', paddingTop: 28 },
   secondaryButton: { alignItems: 'center', borderRadius: 18, borderWidth: 1, flex: 1, justifyContent: 'center', paddingVertical: 16 },
   secondaryButtonText: { fontFamily: AppFonts.semibold, fontSize: 15 },
   primaryButton: { alignItems: 'center', borderRadius: 18, flex: 1, justifyContent: 'center', paddingVertical: 16 },

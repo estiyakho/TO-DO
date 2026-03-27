@@ -1,46 +1,79 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { TextStyle } from 'react-native';
+import { Text, useWindowDimensions } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { HapticTab } from '@/components/haptic-tab';
+import { AppFonts } from '@/constants/fonts';
 import { useAppTheme } from '@/hooks/use-app-theme';
-
-const tabLabelStyle: TextStyle = {
-  fontFamily: 'Inconsolata_600SemiBold',
-  fontSize: 11,
-  marginTop: 1,
-};
 
 export default function TabLayout() {
   const colors = useAppTheme();
+  const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+
+  const compact = width < 390;
+  const labelSize = width < 360 ? 9.5 : compact ? 10.5 : 11.5;
+  const iconSize = width < 360 ? 20 : 22;
+  const horizontalPadding = width < 360 ? 4 : compact ? 6 : 8;
+  const bottomPadding = Math.max(insets.bottom, 9);
+  const tabBarHeight = 54 + bottomPadding;
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#F8FAFC',
+        tabBarActiveTintColor: colors.text,
         tabBarInactiveTintColor: colors.textMuted,
         headerShown: false,
         tabBarButton: HapticTab,
-        tabBarActiveBackgroundColor: 'rgba(196, 181, 253, 0.22)',
+        tabBarActiveBackgroundColor: 'transparent',
         tabBarItemStyle: {
-          borderRadius: 16,
+          alignItems: 'center',
+          borderRadius: 999,
+          flex: 1,
+          justifyContent: 'center',
           marginHorizontal: 2,
-          marginVertical: 7,
-          paddingTop: 4,
+          marginVertical: 4,
+          maxWidth: 88,
+          minWidth: 0,
+          paddingHorizontal: 2,
+          paddingVertical: 0,
         },
         tabBarIconStyle: {
           marginBottom: 1,
+          marginTop: -1,
         },
-        tabBarLabelStyle: tabLabelStyle,
+        tabBarLabel: ({ color, children }) => (
+          <Text
+            numberOfLines={1}
+            style={{
+              color,
+              fontFamily: AppFonts.semibold,
+              fontSize: labelSize,
+              includeFontPadding: false,
+              lineHeight: labelSize + 2,
+              textAlign: 'center',
+            }}>
+            {children}
+          </Text>
+        ),
+        tabBarLabelPosition: 'below-icon',
         tabBarStyle: {
           backgroundColor: colors.surfaceElevated,
           borderTopColor: colors.border,
+          borderTopLeftRadius: 24,
+          borderTopRightRadius: 24,
           borderTopWidth: 1,
-          height: 74,
-          paddingBottom: 9,
-          paddingHorizontal: 4,
-          paddingTop: 6,
+          elevation: 0,
+          height: tabBarHeight,
+          paddingBottom: bottomPadding,
+          paddingHorizontal: horizontalPadding,
+          paddingTop: 1,
+          shadowColor: '#000000',
+          shadowOffset: { width: 0, height: -6 },
+          shadowOpacity: 0.08,
+          shadowRadius: 16,
         },
         sceneStyle: {
           backgroundColor: colors.background,
@@ -51,35 +84,35 @@ export default function TabLayout() {
         name="categories"
         options={{
           title: 'Categories',
-          tabBarIcon: ({ color, size }) => <Ionicons name="folder-outline" size={size - 2} color={color} />,
+          tabBarIcon: ({ color }) => <Ionicons name="folder-outline" size={iconSize} color={color} />,
         }}
       />
       <Tabs.Screen
         name="todos"
         options={{
           title: 'All Todos',
-          tabBarIcon: ({ color, size }) => <Ionicons name="checkmark-done-outline" size={size - 2} color={color} />,
+          tabBarIcon: ({ color }) => <Ionicons name="checkmark-done-outline" size={iconSize} color={color} />,
         }}
       />
       <Tabs.Screen
         name="calendar"
         options={{
           title: 'Calendar',
-          tabBarIcon: ({ color, size }) => <Ionicons name="calendar-outline" size={size - 2} color={color} />,
+          tabBarIcon: ({ color }) => <Ionicons name="calendar-outline" size={iconSize} color={color} />,
         }}
       />
       <Tabs.Screen
         name="statistics"
         options={{
           title: 'Statistics',
-          tabBarIcon: ({ color, size }) => <Ionicons name="stats-chart-outline" size={size - 2} color={color} />,
+          tabBarIcon: ({ color }) => <Ionicons name="stats-chart-outline" size={iconSize} color={color} />,
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
           title: 'Settings',
-          tabBarIcon: ({ color, size }) => <Ionicons name="settings-outline" size={size - 2} color={color} />,
+          tabBarIcon: ({ color }) => <Ionicons name="settings-outline" size={iconSize} color={color} />,
         }}
       />
     </Tabs>

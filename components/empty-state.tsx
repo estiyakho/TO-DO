@@ -1,5 +1,7 @@
-import { useAppTheme } from '@/hooks/use-app-theme';
 import { StyleSheet, Text, View } from 'react-native';
+
+import { AppFonts } from '@/constants/fonts';
+import { useAppTheme } from '@/hooks/use-app-theme';
 
 type EmptyStateProps = {
   title: string;
@@ -27,11 +29,12 @@ const styles = StyleSheet.create({
     paddingVertical: 32,
   },
   title: {
+    fontFamily: AppFonts.semibold,
     fontSize: 18,
-    fontWeight: '700',
     marginBottom: 8,
   },
   description: {
+    fontFamily: AppFonts.medium,
     fontSize: 14,
     lineHeight: 20,
     textAlign: 'center',

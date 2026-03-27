@@ -9,12 +9,12 @@ import { AppFonts } from '@/constants/fonts';
 import { useAppTheme } from '@/hooks/use-app-theme';
 import { useTaskStore } from '@/store/use-task-store';
 
-function ProgressRing({ progress, color }: { progress: number; color: string }) {
+function ProgressRing({ progress, color, labelColor, baseColor }: { progress: number; color: string; labelColor: string; baseColor: string }) {
   const degrees = Math.max(0, Math.min(360, Math.round((progress / 100) * 360)));
 
   return (
     <View style={styles.ringWrap}>
-      <View style={styles.ringBase} />
+      <View style={[styles.ringBase, { borderColor: baseColor }]} />
       <View
         style={[
           styles.ringArc,
@@ -28,7 +28,7 @@ function ProgressRing({ progress, color }: { progress: number; color: string }) 
         ]}
       />
       <View style={styles.ringCenter}>
-        <Text style={styles.ringText}>{progress}%</Text>
+        <Text style={[styles.ringText, { color: labelColor }]}>{progress}%</Text>
       </View>
     </View>
   );
@@ -69,7 +69,10 @@ export default function CategoriesScreen() {
 
     return categorySummaries.filter((category) => {
       const matchesTab = activeTab === 'active' ? !category.archived : category.archived;
-      const matchesQuery = !normalizedQuery || category.name.toLowerCase().includes(normalizedQuery);
+      const matchesQuery =
+        !normalizedQuery ||
+        category.name.toLowerCase().includes(normalizedQuery) ||
+        category.description?.toLowerCase().includes(normalizedQuery);
       return matchesTab && matchesQuery;
     });
   }, [activeTab, categorySummaries, query]);
@@ -80,8 +83,8 @@ export default function CategoriesScreen() {
   const overallProgress = totalTasks ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
   return (
-    <SafeAreaView edges={['top']} style={[styles.safeArea, { backgroundColor: colors.background }]}>
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView edges={['top']} style={[styles.safeArea, { backgroundColor: colors.background }]}> 
+      <View style={[styles.container, { backgroundColor: colors.background }]}> 
         <View style={[styles.searchBar, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}> 
           <Ionicons color={colors.textMuted} name="search-outline" size={24} />
           <TextInput
@@ -112,13 +115,13 @@ export default function CategoriesScreen() {
           </View>
 
           <View style={styles.summaryStats}>
-            <View style={[styles.statPill, { backgroundColor: '#47455A' }]}> 
-              <Ionicons color="#C4B5FD" name="checkmark-circle-outline" size={16} />
-              <Text style={[styles.statText, { color: '#D8CCFF' }]}>{completedTasks} Completed</Text>
+            <View style={[styles.statPill, { backgroundColor: `${colors.accent}16`, borderColor: `${colors.accent}24` }]}> 
+              <Ionicons color={colors.accent} name="checkmark-circle-outline" size={16} />
+              <Text style={[styles.statText, { color: colors.text }]}>{completedTasks} Completed</Text>
             </View>
-            <View style={[styles.statPill, { backgroundColor: '#4B434A' }]}> 
-              <Ionicons color="#F9A8D4" name="list-outline" size={16} />
-              <Text style={[styles.statText, { color: '#FBCFE8' }]}>{remainingTasks} Remaining</Text>
+            <View style={[styles.statPill, { backgroundColor: `${colors.warning}16`, borderColor: `${colors.warning}24` }]}> 
+              <Ionicons color={colors.warning} name="list-outline" size={16} />
+              <Text style={[styles.statText, { color: colors.text }]}>{remainingTasks} Remaining</Text>
             </View>
           </View>
         </View>
@@ -145,15 +148,15 @@ export default function CategoriesScreen() {
               onPress={() => router.push({ pathname: '/todos', params: { categoryId: item.id } })}
               style={[styles.card, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}> 
               <View style={styles.cardLeft}>
-                <ProgressRing color={item.color} progress={item.progress} />
+                <ProgressRing color={item.color} progress={item.progress} labelColor={colors.text} baseColor={colors.border} />
                 <View style={styles.cardTextWrap}>
                   <Text numberOfLines={1} style={[styles.cardTitle, { color: colors.text }]}>{item.name}</Text>
-                  <Text numberOfLines={1} style={[styles.cardMeta, { color: colors.textMuted }]}>
-                    {item.remaining > 0 ? `${item.remaining} task${item.remaining > 1 ? 's' : ''} left` : 'All tasks completed'}
+                  <Text numberOfLines={2} style={[styles.cardMeta, { color: colors.textMuted }]}>
+                    {item.description || (item.remaining > 0 ? `${item.remaining} task${item.remaining > 1 ? 's' : ''} left` : 'All tasks completed')}
                   </Text>
                 </View>
               </View>
-              <View style={[styles.countPill, { backgroundColor: colors.surfaceMuted }]}>
+              <View style={[styles.countPill, { backgroundColor: colors.surfaceMuted }]}> 
                 <Text style={[styles.countText, { color: colors.text }]}>{item.completed}/{item.total}</Text>
               </View>
             </Pressable>
@@ -161,7 +164,7 @@ export default function CategoriesScreen() {
           ListEmptyComponent={
             <View style={styles.emptyWrap}>
               <Text style={[styles.emptyTitle, { color: colors.text }]}>No categories yet</Text>
-              <Text style={[styles.emptyText, { color: colors.textMuted }]}>Add one and it will appear here in this layout.</Text>
+              <Text style={[styles.emptyText, { color: colors.textMuted }]}>Add category to organize to dos.</Text>
             </View>
           }
           showsVerticalScrollIndicator={false}
@@ -252,6 +255,7 @@ const styles = StyleSheet.create({
   statPill: {
     alignItems: 'center',
     borderRadius: 16,
+    borderWidth: 1,
     flex: 1,
     flexDirection: 'row',
     gap: 6,
@@ -307,6 +311,7 @@ const styles = StyleSheet.create({
   cardTextWrap: {
     flex: 1,
     marginLeft: 12,
+    marginRight: 8,
   },
   cardTitle: {
     fontFamily: AppFonts.bold,
@@ -338,7 +343,6 @@ const styles = StyleSheet.create({
     width: 64,
   },
   ringBase: {
-    borderColor: '#363542',
     borderRadius: 32,
     borderWidth: 5,
     height: 64,
@@ -360,7 +364,6 @@ const styles = StyleSheet.create({
   },
   ringText: {
     fontFamily: AppFonts.bold,
-    color: '#F8FAFC',
     fontSize: 12,
   },
   emptyWrap: {

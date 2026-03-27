@@ -6,6 +6,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import { EmptyState } from '@/components/empty-state';
 import { FloatingActionButton } from '@/components/floating-action-button';
+import { SettingsOptionSheet } from '@/components/settings-option-sheet';
 import { TaskItem } from '@/components/task-item';
 import { AppFonts } from '@/constants/fonts';
 import { useAppTheme } from '@/hooks/use-app-theme';
@@ -17,6 +18,15 @@ const FILTER_OPTIONS: { label: string; value: TaskStatus }[] = [
   { label: 'Doing', value: 'todo' },
   { label: 'Done', value: 'done' },
 ];
+
+const SORT_OPTIONS = [
+  { label: 'Newest First', value: 'newest' as const },
+  { label: 'Oldest First', value: 'oldest' as const },
+  { label: 'Title A-Z', value: 'title-asc' as const },
+  { label: 'Title Z-A', value: 'title-desc' as const },
+];
+
+type SortMode = (typeof SORT_OPTIONS)[number]['value'];
 
 export default function TodosScreen() {
   const router = useRouter();
@@ -32,6 +42,8 @@ export default function TodosScreen() {
   const [activeFilter, setActiveFilter] = useState<TaskStatus>('todo');
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('all');
   const [query, setQuery] = useState('');
+  const [sortMode, setSortMode] = useState<SortMode>('newest');
+  const [sortSheetVisible, setSortSheetVisible] = useState(false);
 
   useEffect(() => {
     if (initialCategory) {
@@ -42,13 +54,31 @@ export default function TodosScreen() {
   const filteredTasks = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
 
-    return tasks.filter((task) => {
+    const result = tasks.filter((task) => {
       const matchesStatus = task.status === activeFilter;
       const matchesCategory = selectedCategoryId === 'all' ? true : task.categoryId === selectedCategoryId;
       const matchesQuery = !normalizedQuery || task.title.toLowerCase().includes(normalizedQuery);
       return matchesStatus && matchesCategory && matchesQuery;
     });
-  }, [activeFilter, query, selectedCategoryId, tasks]);
+
+    result.sort((left, right) => {
+      if (sortMode === 'newest') {
+        return new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime();
+      }
+
+      if (sortMode === 'oldest') {
+        return new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime();
+      }
+
+      if (sortMode === 'title-asc') {
+        return left.title.localeCompare(right.title);
+      }
+
+      return right.title.localeCompare(left.title);
+    });
+
+    return result;
+  }, [activeFilter, query, selectedCategoryId, sortMode, tasks]);
 
   return (
     <SafeAreaView edges={['top']} style={[styles.safeArea, { backgroundColor: colors.background }]}> 
@@ -74,7 +104,7 @@ export default function TodosScreen() {
               </Pressable>
             );
           })}
-          <Pressable style={styles.filterButton} onPress={() => setSelectedCategoryId('all')}>
+          <Pressable style={styles.filterButton} onPress={() => setSortSheetVisible(true)}>
             <Ionicons name="filter-outline" size={18} color={colors.textMuted} />
           </Pressable>
         </View>
@@ -113,6 +143,16 @@ export default function TodosScreen() {
 
         <FloatingActionButton onPress={() => router.push({ pathname: '/add-task', params: selectedCategoryId !== 'all' ? { categoryId: selectedCategoryId } : undefined })} />
       </View>
+
+      <SettingsOptionSheet
+        visible={sortSheetVisible}
+        title="Sort Todos"
+        iconName="swap-vertical-outline"
+        options={SORT_OPTIONS}
+        selectedValue={sortMode}
+        onClose={() => setSortSheetVisible(false)}
+        onSelect={setSortMode}
+      />
     </SafeAreaView>
   );
 }

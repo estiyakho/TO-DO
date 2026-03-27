@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { AppFonts } from '@/constants/fonts';
 import { useAppTheme } from '@/hooks/use-app-theme';
 
 type Option<T extends string | number> = {
@@ -100,8 +101,8 @@ const styles = StyleSheet.create({
   },
   title: {
     flex: 1,
+    fontFamily: AppFonts.bold,
     fontSize: 18,
-    fontWeight: '800',
   },
   option: {
     alignItems: 'center',
@@ -110,8 +111,8 @@ const styles = StyleSheet.create({
   },
   optionLabel: {
     flex: 1,
+    fontFamily: AppFonts.semibold,
     fontSize: 17,
-    fontWeight: '600',
   },
   checkWrap: {
     alignItems: 'center',

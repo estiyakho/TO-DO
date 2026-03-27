@@ -14,7 +14,7 @@ type TaskStore = {
   addTask: (input: { title: string; description?: string; categoryId?: string }) => void;
   toggleTaskStatus: (id: string) => void;
   deleteTask: (id: string) => void;
-  addCategory: (name: string) => string | null;
+  addCategory: (input: { name: string; description?: string }) => string | null;
   resetData: () => void;
   resetStats: () => void;
   resetSettings: () => void;
@@ -70,8 +70,10 @@ export const useTaskStore = create<TaskStore>()(
         set((state) => ({
           tasks: state.tasks.filter((task) => task.id !== id),
         })),
-      addCategory: (name) => {
+      addCategory: ({ name, description }) => {
         const trimmedName = name.trim();
+        const trimmedDescription = description?.trim() || undefined;
+
         if (!trimmedName) {
           return null;
         }
@@ -87,6 +89,7 @@ export const useTaskStore = create<TaskStore>()(
         const category: Category = {
           id: `${trimmedName.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`,
           name: trimmedName,
+          description: trimmedDescription,
           color: CATEGORY_COLORS[nextIndex % CATEGORY_COLORS.length],
           icon: CATEGORY_ICONS[nextIndex % CATEGORY_ICONS.length],
           createdAt: new Date().toISOString(),
@@ -158,7 +161,7 @@ export const useTaskStore = create<TaskStore>()(
     }),
     {
       name: 'todo-app-storage',
-      version: 3,
+      version: 4,
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (state) => ({
         tasks: state.tasks,
@@ -178,7 +181,10 @@ export const useTaskStore = create<TaskStore>()(
 
         return {
           tasks: state?.tasks ?? [],
-          categories: state?.categories ?? DEFAULT_CATEGORIES,
+          categories: (state?.categories ?? DEFAULT_CATEGORIES).map((category) => ({
+            ...category,
+            description: category.description ?? undefined,
+          })),
           settings: {
             ...DEFAULT_SETTINGS,
             ...state?.settings,

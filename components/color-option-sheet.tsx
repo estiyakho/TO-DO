@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { AppFonts } from '@/constants/fonts';
 import { useAppTheme } from '@/hooks/use-app-theme';
 
 type ColorOption = {
@@ -79,8 +80,8 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   title: {
+    fontFamily: AppFonts.bold,
     fontSize: 20,
-    fontWeight: '800',
     marginBottom: 18,
   },
   grid: {
@@ -91,8 +92,8 @@ const styles = StyleSheet.create({
   item: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: '14%',
     minWidth: 52,
+    width: '14%',
   },
   swatch: {
     alignItems: 'center',
