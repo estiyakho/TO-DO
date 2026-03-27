@@ -12,6 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 
+import { AppFonts } from '@/constants/fonts';
 import { useAppTheme } from '@/hooks/use-app-theme';
 import { useTaskStore } from '@/store/use-task-store';
 import { runListAnimation } from '@/utils/layout-animation';
@@ -128,17 +129,17 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1 },
   flex: { flex: 1 },
   container: { flexGrow: 1, paddingBottom: 24, paddingHorizontal: 20, paddingTop: 12 },
-  title: { fontSize: 30, fontWeight: '800', marginBottom: 8 },
-  subtitle: { fontSize: 15, lineHeight: 22, marginBottom: 24 },
+  title: { fontFamily: AppFonts.bold, fontSize: 30, marginBottom: 8 },
+  subtitle: { fontFamily: AppFonts.medium, fontSize: 15, lineHeight: 22, marginBottom: 24 },
   form: { gap: 18 },
-  label: { fontSize: 14, fontWeight: '700', marginBottom: 10 },
-  input: { borderRadius: 18, borderWidth: 1, fontSize: 16, paddingHorizontal: 16, paddingVertical: 14 },
+  label: { fontFamily: AppFonts.semibold, fontSize: 14, marginBottom: 10 },
+  input: { borderRadius: 18, borderWidth: 1, fontFamily: AppFonts.medium, fontSize: 16, paddingHorizontal: 16, paddingVertical: 14 },
   textArea: { minHeight: 120 },
   categoryHeader: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
-  newCategoryText: { fontSize: 13, fontWeight: '700' },
+  newCategoryText: { fontFamily: AppFonts.semibold, fontSize: 13 },
   categoryList: { gap: 10, paddingRight: 12 },
   categoryChip: { borderRadius: 999, paddingHorizontal: 14, paddingVertical: 10 },
-  categoryChipText: { color: '#F8FAFC', fontSize: 13, fontWeight: '700' },
+  categoryChipText: { color: '#F8FAFC', fontFamily: AppFonts.semibold, fontSize: 13 },
   footer: { flexDirection: 'row', gap: 12, marginTop: 'auto', paddingTop: 32 },
   secondaryButton: {
     alignItems: 'center',
@@ -148,7 +149,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 16,
   },
-  secondaryButtonText: { fontSize: 15, fontWeight: '700' },
+  secondaryButtonText: { fontFamily: AppFonts.semibold, fontSize: 15 },
   primaryButton: {
     alignItems: 'center',
     borderRadius: 18,
@@ -157,5 +158,5 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   primaryButtonDisabled: { opacity: 0.45 },
-  primaryButtonText: { color: '#F8FAFC', fontSize: 15, fontWeight: '700' },
+  primaryButtonText: { color: '#F8FAFC', fontFamily: AppFonts.semibold, fontSize: 15 },
 });

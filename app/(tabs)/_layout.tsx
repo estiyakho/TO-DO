@@ -7,9 +7,9 @@ import { HapticTab } from '@/components/haptic-tab';
 import { useAppTheme } from '@/hooks/use-app-theme';
 
 const tabLabelStyle: TextStyle = {
-  fontFamily: 'Montserrat_500Medium',
-  fontSize: 12,
-  marginTop: 2,
+  fontFamily: 'Inconsolata_600SemiBold',
+  fontSize: 11,
+  marginTop: 1,
 };
 
 export default function TabLayout() {
@@ -22,23 +22,25 @@ export default function TabLayout() {
         tabBarInactiveTintColor: colors.textMuted,
         headerShown: false,
         tabBarButton: HapticTab,
-        tabBarActiveBackgroundColor: 'rgba(196, 181, 253, 0.28)',
+        tabBarActiveBackgroundColor: 'rgba(196, 181, 253, 0.22)',
         tabBarItemStyle: {
-          borderRadius: 18,
-          marginHorizontal: 4,
-          marginVertical: 6,
-          paddingTop: 6,
+          borderRadius: 16,
+          marginHorizontal: 2,
+          marginVertical: 7,
+          paddingTop: 4,
         },
         tabBarIconStyle: {
-          marginBottom: 2,
+          marginBottom: 1,
         },
         tabBarLabelStyle: tabLabelStyle,
         tabBarStyle: {
           backgroundColor: colors.surfaceElevated,
           borderTopColor: colors.border,
-          height: 78,
-          paddingBottom: 10,
-          paddingTop: 8,
+          borderTopWidth: 1,
+          height: 74,
+          paddingBottom: 9,
+          paddingHorizontal: 4,
+          paddingTop: 6,
         },
         sceneStyle: {
           backgroundColor: colors.background,
@@ -49,35 +51,35 @@ export default function TabLayout() {
         name="categories"
         options={{
           title: 'Categories',
-          tabBarIcon: ({ color, size }) => <Ionicons name="folder-outline" size={size - 1} color={color} />,
+          tabBarIcon: ({ color, size }) => <Ionicons name="folder-outline" size={size - 2} color={color} />,
         }}
       />
       <Tabs.Screen
         name="todos"
         options={{
           title: 'All Todos',
-          tabBarIcon: ({ color, size }) => <Ionicons name="checkmark-done-outline" size={size - 1} color={color} />,
+          tabBarIcon: ({ color, size }) => <Ionicons name="checkmark-done-outline" size={size - 2} color={color} />,
         }}
       />
       <Tabs.Screen
         name="calendar"
         options={{
           title: 'Calendar',
-          tabBarIcon: ({ color, size }) => <Ionicons name="calendar-outline" size={size - 1} color={color} />,
+          tabBarIcon: ({ color, size }) => <Ionicons name="calendar-outline" size={size - 2} color={color} />,
         }}
       />
       <Tabs.Screen
         name="statistics"
         options={{
           title: 'Statistics',
-          tabBarIcon: ({ color, size }) => <Ionicons name="stats-chart-outline" size={size - 1} color={color} />,
+          tabBarIcon: ({ color, size }) => <Ionicons name="stats-chart-outline" size={size - 2} color={color} />,
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
           title: 'Settings',
-          tabBarIcon: ({ color, size }) => <Ionicons name="settings-outline" size={size - 1} color={color} />,
+          tabBarIcon: ({ color, size }) => <Ionicons name="settings-outline" size={size - 2} color={color} />,
         }}
       />
     </Tabs>

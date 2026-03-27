@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 
 import { FloatingActionButton } from '@/components/floating-action-button';
+import { AppFonts } from '@/constants/fonts';
 import { useAppTheme } from '@/hooks/use-app-theme';
 import { useTaskStore } from '@/store/use-task-store';
 
@@ -79,8 +80,8 @@ export default function CategoriesScreen() {
   const overallProgress = totalTasks ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
   return (
-    <SafeAreaView edges={['top']} style={[styles.safeArea, { backgroundColor: colors.background }]}> 
-      <View style={[styles.container, { backgroundColor: colors.background }]}> 
+    <SafeAreaView edges={['top']} style={[styles.safeArea, { backgroundColor: colors.background }]}>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={[styles.searchBar, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}> 
           <Ionicons color={colors.textMuted} name="search-outline" size={24} />
           <TextInput
@@ -186,6 +187,7 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
+    fontFamily: AppFonts.medium,
     fontSize: 16,
     marginLeft: 10,
     paddingVertical: 0,
@@ -213,13 +215,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   summaryTitle: {
+    fontFamily: AppFonts.bold,
     fontSize: 18,
-    fontWeight: '800',
     marginBottom: 2,
   },
   summarySubtitle: {
+    fontFamily: AppFonts.medium,
     fontSize: 14,
-    fontWeight: '500',
   },
   progressRow: {
     alignItems: 'center',
@@ -237,8 +239,8 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   progressValue: {
+    fontFamily: AppFonts.bold,
     fontSize: 18,
-    fontWeight: '800',
     marginLeft: 12,
     minWidth: 46,
     textAlign: 'right',
@@ -258,8 +260,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   statText: {
+    fontFamily: AppFonts.semibold,
     fontSize: 13,
-    fontWeight: '600',
   },
   tabRow: {
     flexDirection: 'row',
@@ -271,8 +273,8 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   tabLabel: {
+    fontFamily: AppFonts.semibold,
     fontSize: 16,
-    fontWeight: '500',
   },
   tabIndicator: {
     borderRadius: 999,
@@ -307,11 +309,12 @@ const styles = StyleSheet.create({
     marginLeft: 12,
   },
   cardTitle: {
+    fontFamily: AppFonts.bold,
     fontSize: 15,
-    fontWeight: '800',
     marginBottom: 4,
   },
   cardMeta: {
+    fontFamily: AppFonts.medium,
     fontSize: 13,
     lineHeight: 18,
   },
@@ -324,8 +327,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   countText: {
+    fontFamily: AppFonts.bold,
     fontSize: 14,
-    fontWeight: '800',
   },
   ringWrap: {
     alignItems: 'center',
@@ -356,20 +359,21 @@ const styles = StyleSheet.create({
     width: 42,
   },
   ringText: {
+    fontFamily: AppFonts.bold,
     color: '#F8FAFC',
     fontSize: 12,
-    fontWeight: '800',
   },
   emptyWrap: {
     alignItems: 'center',
     paddingTop: 32,
   },
   emptyTitle: {
+    fontFamily: AppFonts.bold,
     fontSize: 18,
-    fontWeight: '700',
     marginBottom: 6,
   },
   emptyText: {
+    fontFamily: AppFonts.medium,
     fontSize: 14,
     textAlign: 'center',
   },

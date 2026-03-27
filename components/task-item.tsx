@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { memo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { AppFonts } from '@/constants/fonts';
 import { useAppTheme } from '@/hooks/use-app-theme';
 import { useTaskStore } from '@/store/use-task-store';
 import { Task } from '@/types/task';
@@ -86,8 +87,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
+    fontFamily: AppFonts.semibold,
     fontSize: 17,
-    fontWeight: '700',
     marginBottom: 8,
   },
   metaWrap: {
@@ -109,14 +110,15 @@ const styles = StyleSheet.create({
     width: 8,
   },
   badgeText: {
+    fontFamily: AppFonts.semibold,
     fontSize: 12,
-    fontWeight: '700',
   },
   createdRow: {
     alignItems: 'center',
     flexDirection: 'row',
   },
   timestamp: {
+    fontFamily: AppFonts.medium,
     fontSize: 12,
     marginLeft: 4,
   },
@@ -132,8 +134,8 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   countText: {
+    fontFamily: AppFonts.semibold,
     fontSize: 13,
-    fontWeight: '700',
     textAlign: 'center',
   },
   deleteButton: {

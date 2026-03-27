@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AppFonts } from '@/constants/fonts';
 import { useAppTheme } from '@/hooks/use-app-theme';
 import { useTaskStore } from '@/store/use-task-store';
 
@@ -165,19 +166,20 @@ const styles = StyleSheet.create({
     width: 28,
   },
   statValue: {
+    fontFamily: AppFonts.bold,
     fontSize: 24,
-    fontWeight: '800',
     marginBottom: 2,
   },
   statLabel: {
+    fontFamily: AppFonts.medium,
     fontSize: 13,
   },
   sectionWrap: {
     marginBottom: 14,
   },
   sectionTitle: {
+    fontFamily: AppFonts.bold,
     fontSize: 22,
-    fontWeight: '800',
     marginBottom: 10,
   },
   rowTwo: {
@@ -195,8 +197,8 @@ const styles = StyleSheet.create({
     minHeight: 54,
   },
   miniValue: {
+    fontFamily: AppFonts.semibold,
     fontSize: 15,
-    fontWeight: '700',
   },
   chartCard: {
     borderRadius: 22,
@@ -205,8 +207,8 @@ const styles = StyleSheet.create({
     padding: 14,
   },
   chartTitle: {
+    fontFamily: AppFonts.bold,
     fontSize: 18,
-    fontWeight: '800',
     marginBottom: 12,
   },
   chartArea: {
@@ -231,6 +233,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   barLabel: {
+    fontFamily: AppFonts.medium,
     fontSize: 11,
     marginTop: 8,
     textAlign: 'center',

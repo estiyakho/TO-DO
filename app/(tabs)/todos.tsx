@@ -7,6 +7,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { EmptyState } from '@/components/empty-state';
 import { FloatingActionButton } from '@/components/floating-action-button';
 import { TaskItem } from '@/components/task-item';
+import { AppFonts } from '@/constants/fonts';
 import { useAppTheme } from '@/hooks/use-app-theme';
 import { useTaskStore } from '@/store/use-task-store';
 import { TaskStatus } from '@/types/task';
@@ -130,6 +131,7 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
+    fontFamily: AppFonts.medium,
     fontSize: 16,
     marginLeft: 10,
   },
@@ -144,8 +146,8 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   tabLabel: {
+    fontFamily: AppFonts.semibold,
     fontSize: 17,
-    fontWeight: '500',
   },
   tabIndicator: {
     borderRadius: 999,
@@ -175,8 +177,8 @@ const styles = StyleSheet.create({
   },
   chipText: {
     color: '#F8FAFC',
+    fontFamily: AppFonts.semibold,
     fontSize: 12,
-    fontWeight: '700',
   },
   listContent: {
     flexGrow: 1,

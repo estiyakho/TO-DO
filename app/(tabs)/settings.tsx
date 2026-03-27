@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { ReactNode, useState } from 'react';
 
 import { ColorOptionSheet } from '@/components/color-option-sheet';
+import { AppFonts } from '@/constants/fonts';
 import { SettingsOptionSheet } from '@/components/settings-option-sheet';
 import { useAppTheme } from '@/hooks/use-app-theme';
 import { useTaskStore } from '@/store/use-task-store';
@@ -28,6 +29,8 @@ type SheetKey =
   | 'language'
   | 'resetInterval'
   | 'resetNow';
+
+type RowTone = 'default' | 'danger';
 
 const ACCENT_COLORS = [
   { label: 'Violet', value: '#8B7CF6' },
@@ -92,26 +95,31 @@ function Row({
   onPress,
   iconName,
   valueNode,
+  tone = 'default',
 }: {
   label: string;
   value?: string;
   onPress: () => void;
   iconName: keyof typeof Ionicons.glyphMap;
   valueNode?: ReactNode;
+  tone?: RowTone;
 }) {
   const colors = useAppTheme();
+  const iconColor = tone === 'danger' ? colors.danger : colors.accent;
+  const labelColor = tone === 'danger' ? colors.danger : colors.text;
+  const valueColor = tone === 'danger' ? '#FCA5A5' : colors.textMuted;
 
   return (
     <Pressable onPress={onPress} style={[styles.row, { borderBottomColor: colors.border }]}> 
       <View style={styles.rowLeft}>
-        <View style={[styles.rowIconWrap, { backgroundColor: `${colors.accent}16` }]}>
-          <Ionicons color={colors.accent} name={iconName} size={18} />
+        <View style={[styles.rowIconWrap, { backgroundColor: `${iconColor}16` }]}>
+          <Ionicons color={iconColor} name={iconName} size={18} />
         </View>
-        <Text style={[styles.rowLabel, { color: colors.text }]}>{label}</Text>
+        <Text style={[styles.rowLabel, { color: labelColor }]}>{label}</Text>
       </View>
       <View style={styles.rowValueWrap}>
-        {valueNode ?? <Text style={[styles.rowValue, { color: colors.textMuted }]}>{value}</Text>}
-        <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+        {valueNode ?? <Text style={[styles.rowValue, { color: valueColor }]}>{value}</Text>}
+        <Ionicons name="chevron-forward" size={18} color={valueColor} />
       </View>
     </Pressable>
   );
@@ -205,7 +213,7 @@ export default function SettingsScreen() {
   };
 
   return (
-    <SafeAreaView edges={['top']} style={[styles.safeArea, { backgroundColor: colors.background }]}>
+    <SafeAreaView edges={['top']} style={[styles.safeArea, { backgroundColor: colors.background }]}> 
       <ScrollView contentContainerStyle={[styles.content, { backgroundColor: colors.background }]} showsVerticalScrollIndicator={false}>
         <Text style={[styles.title, { color: colors.text }]}>Settings</Text>
         <Text style={[styles.subtitle, { color: colors.textMuted }]}>Shape the app around the way you like to work.</Text>
@@ -243,7 +251,7 @@ export default function SettingsScreen() {
             </View>
             <Text style={[styles.rowValue, { color: colors.textMuted }]}>{tasksCount + categoriesCount}</Text>
           </View>
-          <Row label="Reset Now" value="" onPress={() => openSheet('resetNow')} iconName="trash-outline" />
+          <Row label="Reset Now" value="" onPress={() => openSheet('resetNow')} iconName="trash-outline" tone="danger" />
         </Section>
       </ScrollView>
 
@@ -263,10 +271,10 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },
   content: { paddingBottom: 32, paddingHorizontal: 20, paddingTop: 10 },
-  title: { fontSize: 32, fontWeight: '800', marginBottom: 8 },
-  subtitle: { fontSize: 15, lineHeight: 22, marginBottom: 20 },
+  title: { fontFamily: AppFonts.bold, fontSize: 32, marginBottom: 8 },
+  subtitle: { fontFamily: AppFonts.medium, fontSize: 15, lineHeight: 22, marginBottom: 20 },
   sectionWrap: { marginBottom: 18 },
-  sectionHeading: { fontSize: 15, fontWeight: '800', marginBottom: 10 },
+  sectionHeading: { fontFamily: AppFonts.bold, fontSize: 15, marginBottom: 10 },
   sectionCard: {
     borderRadius: 28,
     borderWidth: 1,
@@ -298,9 +306,9 @@ const styles = StyleSheet.create({
     marginRight: 12,
     width: 36,
   },
-  rowLabel: { fontSize: 15, fontWeight: '600' },
+  rowLabel: { fontFamily: AppFonts.semibold, fontSize: 15 },
   rowValueWrap: { alignItems: 'center', flexDirection: 'row', gap: 8 },
-  rowValue: { fontSize: 14, fontWeight: '500' },
+  rowValue: { fontFamily: AppFonts.medium, fontSize: 14 },
   colorPreview: {
     borderRadius: 10,
     height: 20,

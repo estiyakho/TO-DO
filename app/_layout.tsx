@@ -5,18 +5,18 @@ import * as SplashScreen from 'expo-splash-screen';
 import 'react-native-reanimated';
 
 import {
-  Montserrat_400Regular,
-  Montserrat_500Medium,
-  Montserrat_600SemiBold,
-  Montserrat_700Bold,
+  Inconsolata_400Regular,
+  Inconsolata_500Medium,
+  Inconsolata_600SemiBold,
+  Inconsolata_700Bold,
   useFonts,
-} from '@expo-google-fonts/montserrat';
+} from '@expo-google-fonts/inconsolata';
 import { useEffect } from 'react';
 
 import { useAutoReset } from '@/hooks/use-auto-reset';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useTaskStore } from '@/store/use-task-store';
-import { applyMontserratDefaults } from '@/utils/typography';
+import { applyInconsolataDefaults } from '@/utils/typography';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -31,10 +31,10 @@ export default function RootLayout() {
   const themePreference = useTaskStore((state) => state.settings.theme);
   const resolvedTheme = themePreference === 'system' ? colorScheme : themePreference;
   const [loaded] = useFonts({
-    Montserrat_400Regular,
-    Montserrat_500Medium,
-    Montserrat_600SemiBold,
-    Montserrat_700Bold,
+    Inconsolata_400Regular,
+    Inconsolata_500Medium,
+    Inconsolata_600SemiBold,
+    Inconsolata_700Bold,
   });
 
   useEffect(() => {
@@ -42,7 +42,7 @@ export default function RootLayout() {
       return;
     }
 
-    applyMontserratDefaults();
+    applyInconsolataDefaults();
     SplashScreen.hideAsync();
   }, [loaded]);
 

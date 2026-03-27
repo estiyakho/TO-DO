@@ -2,7 +2,7 @@ import { Text, TextInput } from 'react-native';
 
 let applied = false;
 
-export function applyMontserratDefaults() {
+export function applyInconsolataDefaults() {
   if (applied) {
     return;
   }
@@ -14,11 +14,11 @@ export function applyMontserratDefaults() {
 
   TextComponent.defaultProps = {
     ...(TextComponent.defaultProps ?? {}),
-    style: [{ fontFamily: 'Montserrat_400Regular' }, TextComponent.defaultProps?.style],
+    style: [{ fontFamily: 'Inconsolata_400Regular' }, TextComponent.defaultProps?.style],
   };
 
   TextInputComponent.defaultProps = {
     ...(TextInputComponent.defaultProps ?? {}),
-    style: [{ fontFamily: 'Montserrat_400Regular' }, TextInputComponent.defaultProps?.style],
+    style: [{ fontFamily: 'Inconsolata_400Regular' }, TextInputComponent.defaultProps?.style],
   };
 }

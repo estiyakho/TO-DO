@@ -4,6 +4,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } fr
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { FloatingActionButton } from '@/components/floating-action-button';
+import { AppFonts } from '@/constants/fonts';
 import { useAppTheme } from '@/hooks/use-app-theme';
 import { useTaskStore } from '@/store/use-task-store';
 import { getMonthGrid, getWeekdayLabels } from '@/utils/calendar';
@@ -130,8 +131,8 @@ const styles = StyleSheet.create({
   },
   monthTitle: {
     flex: 1,
+    fontFamily: AppFonts.bold,
     fontSize: 18,
-    fontWeight: '800',
     textAlign: 'center',
   },
   modePill: {
@@ -142,8 +143,8 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   modeText: {
+    fontFamily: AppFonts.semibold,
     fontSize: 13,
-    fontWeight: '600',
   },
   weekRow: {
     flexDirection: 'row',
@@ -151,8 +152,8 @@ const styles = StyleSheet.create({
   },
   weekday: {
     flex: 1,
+    fontFamily: AppFonts.semibold,
     fontSize: 12,
-    fontWeight: '700',
     textAlign: 'center',
   },
   grid: {
@@ -166,8 +167,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   dayNumber: {
+    fontFamily: AppFonts.semibold,
     fontSize: 18,
-    fontWeight: '600',
     textAlign: 'center',
   },
   tabRow: {
@@ -181,8 +182,8 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   tabLabel: {
+    fontFamily: AppFonts.semibold,
     fontSize: 17,
-    fontWeight: '500',
   },
   tabIndicator: {
     backgroundColor: '#C4B5FD',
@@ -208,8 +209,8 @@ const styles = StyleSheet.create({
     padding: 14,
   },
   todoTitle: {
+    fontFamily: AppFonts.semibold,
     fontSize: 16,
-    fontWeight: '700',
   },
   emptyBlock: {
     alignItems: 'center',
@@ -224,13 +225,13 @@ const styles = StyleSheet.create({
     width: 80,
   },
   emptyTitle: {
+    fontFamily: AppFonts.bold,
     fontSize: 18,
-    fontWeight: '800',
     marginBottom: 8,
   },
   emptyText: {
+    fontFamily: AppFonts.medium,
     fontSize: 15,
     textAlign: 'center',
   },
 });
-
