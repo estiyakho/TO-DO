@@ -51,6 +51,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "af795914-62c1-4e9e-b5a2-163eb56b38d1"
+      }
+    },
+    "owner": "kaytise"
   }
 }
