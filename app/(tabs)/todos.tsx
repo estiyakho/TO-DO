@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useEffect, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { FlatList, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
@@ -37,6 +37,7 @@ export default function TodosScreen() {
   const categories = useTaskStore((state) => state.categories);
   const toggleTaskStatus = useTaskStore((state) => state.toggleTaskStatus);
   const deleteTask = useTaskStore((state) => state.deleteTask);
+  const timeFormat = useTaskStore((state) => state.settings.timeFormat);
 
   const initialCategory = Array.isArray(params.categoryId) ? params.categoryId[0] : params.categoryId;
   const [activeFilter, setActiveFilter] = useState<TaskStatus>('todo');
@@ -80,6 +81,49 @@ export default function TodosScreen() {
     return result;
   }, [activeFilter, query, selectedCategoryId, sortMode, tasks]);
 
+  const categoryMap = useMemo(
+    () =>
+      new Map(
+        categories.map((category) => [
+          category.id,
+          {
+            color: category.color,
+            name: category.name,
+          },
+        ])
+      ),
+    [categories]
+  );
+
+  const handleDelete = useCallback(
+    (id: string) => {
+      runListAnimation();
+      deleteTask(id);
+    },
+    [deleteTask]
+  );
+
+  const handleToggle = useCallback(
+    (id: string) => {
+      runListAnimation();
+      toggleTaskStatus(id);
+    },
+    [toggleTaskStatus]
+  );
+
+  const renderTask = useCallback(
+    ({ item }: { item: (typeof filteredTasks)[number] }) => (
+      <TaskItem
+        task={item}
+        category={item.categoryId ? categoryMap.get(item.categoryId) : undefined}
+        timeFormat={timeFormat}
+        onDelete={handleDelete}
+        onToggle={handleToggle}
+      />
+    ),
+    [categoryMap, handleDelete, handleToggle, timeFormat]
+  );
+
   return (
     <SafeAreaView edges={['top']} style={[styles.safeArea, { backgroundColor: colors.background }]}> 
       <View style={[styles.container, { backgroundColor: colors.background }]}> 
@@ -120,26 +164,20 @@ export default function TodosScreen() {
           ))}
         </ScrollView>
 
-        <ScrollView contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false}>
-          {filteredTasks.length ? (
-            filteredTasks.map((item) => (
-              <TaskItem
-                key={item.id}
-                task={item}
-                onDelete={(id) => {
-                  runListAnimation();
-                  deleteTask(id);
-                }}
-                onToggle={(id) => {
-                  runListAnimation();
-                  toggleTaskStatus(id);
-                }}
-              />
-            ))
-          ) : (
-            <EmptyState title="Add a Todo" description="Create a to do to get started." />
-          )}
-        </ScrollView>
+        <FlatList
+          contentContainerStyle={styles.listContent}
+          data={filteredTasks}
+          keyExtractor={(item) => item.id}
+          keyboardShouldPersistTaps="handled"
+          ListEmptyComponent={<EmptyState title="Add a Todo" description="Create a to do to get started." />}
+          removeClippedSubviews
+          renderItem={renderTask}
+          showsVerticalScrollIndicator={false}
+          windowSize={8}
+          initialNumToRender={10}
+          maxToRenderPerBatch={12}
+          updateCellsBatchingPeriod={50}
+        />
 
         <FloatingActionButton onPress={() => router.push({ pathname: '/add-task', params: selectedCategoryId !== 'all' ? { categoryId: selectedCategoryId } : undefined })} />
       </View>

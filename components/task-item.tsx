@@ -4,20 +4,22 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { AppFonts } from '@/constants/fonts';
 import { useAppTheme } from '@/hooks/use-app-theme';
-import { useTaskStore } from '@/store/use-task-store';
 import { Task } from '@/types/task';
 import { formatTaskDate } from '@/utils/date';
 
 type TaskItemProps = {
   task: Task;
+  category?: {
+    color: string;
+    name: string;
+  };
+  timeFormat: '12h' | '24h';
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
 };
 
-function TaskItemComponent({ task, onToggle, onDelete }: TaskItemProps) {
+function TaskItemComponent({ task, category, timeFormat, onToggle, onDelete }: TaskItemProps) {
   const colors = useAppTheme();
-  const category = useTaskStore((state) => state.categories.find((item) => item.id === task.categoryId));
-  const timeFormat = useTaskStore((state) => state.settings.timeFormat);
   const done = task.status === 'done';
 
   return (
