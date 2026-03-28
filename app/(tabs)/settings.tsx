@@ -16,6 +16,7 @@ import {
   SnoozeDuration,
   TimeFormat,
 } from '@/types/task';
+import { COLOR_PALETTES } from '@/utils/color-palettes';
 import { formatRelativeResetLabel } from '@/utils/reset';
 
 type SheetKey =
@@ -32,14 +33,6 @@ type SheetKey =
 
 type RowTone = 'default' | 'danger';
 
-const ACCENT_COLORS = [
-  { label: 'Violet', value: '#8B7CF6' },
-  { label: 'Blue', value: '#2563EB' },
-  { label: 'Mint', value: '#10B981' },
-  { label: 'Rose', value: '#F43F5E' },
-  { label: 'Amber', value: '#F59E0B' },
-  { label: 'Cyan', value: '#06B6D4' },
-];
 const TIME_FORMATS: { label: string; value: TimeFormat }[] = [
   { label: '12-Hour', value: '12h' },
   { label: '24-Hour', value: '24h' },
@@ -255,7 +248,7 @@ export default function SettingsScreen() {
       </ScrollView>
 
       <SettingsOptionSheet visible={activeSheet === 'theme'} title="Theme" iconName="sunny-outline" options={THEMES} selectedValue={settings.theme} onClose={closeSheet} onSelect={(value) => updateSettings({ theme: value })} />
-      <ColorOptionSheet visible={activeSheet === 'accentColor'} title="Accent Color" options={ACCENT_COLORS} selectedValue={settings.accentColor} onClose={closeSheet} onSelect={(value) => updateSettings({ accentColor: value })} />
+      <ColorOptionSheet visible={activeSheet === 'accentColor'} title="Accent Color" palettes={COLOR_PALETTES} selectedValue={settings.accentColor} onClose={closeSheet} onSelect={(value) => updateSettings({ accentColor: value })} />
       <SettingsOptionSheet visible={activeSheet === 'timeFormat'} title="Time Format" iconName="time-outline" options={TIME_FORMATS} selectedValue={settings.timeFormat} onClose={closeSheet} onSelect={(value) => updateSettings({ timeFormat: value })} />
       <SettingsOptionSheet visible={activeSheet === 'firstDayOfWeek'} title="First Day of the Week" iconName="calendar-clear-outline" options={FIRST_DAYS} selectedValue={settings.firstDayOfWeek} onClose={closeSheet} onSelect={(value) => updateSettings({ firstDayOfWeek: value })} />
       <SettingsOptionSheet visible={activeSheet === 'snoozeDuration'} title="Snooze Duration" iconName="alarm-outline" options={SNOOZE_DURATIONS} selectedValue={settings.snoozeDuration} onClose={closeSheet} onSelect={(value) => updateSettings({ snoozeDuration: value })} />

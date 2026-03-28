@@ -2,11 +2,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FlatList, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 
 import { EmptyState } from '@/components/empty-state';
 import { FloatingActionButton } from '@/components/floating-action-button';
 import { SettingsOptionSheet } from '@/components/settings-option-sheet';
+import { TaskFormModal } from '@/components/task-form-modal';
 import { TaskItem } from '@/components/task-item';
 import { AppFonts } from '@/constants/fonts';
 import { useAppTheme } from '@/hooks/use-app-theme';
@@ -29,7 +30,6 @@ const SORT_OPTIONS = [
 type SortMode = (typeof SORT_OPTIONS)[number]['value'];
 
 export default function TodosScreen() {
-  const router = useRouter();
   const params = useLocalSearchParams<{ categoryId?: string | string[] }>();
   const colors = useAppTheme();
 
@@ -45,6 +45,7 @@ export default function TodosScreen() {
   const [query, setQuery] = useState('');
   const [sortMode, setSortMode] = useState<SortMode>('newest');
   const [sortSheetVisible, setSortSheetVisible] = useState(false);
+  const [taskModalVisible, setTaskModalVisible] = useState(false);
 
   useEffect(() => {
     if (initialCategory) {
@@ -179,7 +180,7 @@ export default function TodosScreen() {
           updateCellsBatchingPeriod={50}
         />
 
-        <FloatingActionButton onPress={() => router.push({ pathname: '/add-task', params: selectedCategoryId !== 'all' ? { categoryId: selectedCategoryId } : undefined })} />
+        <FloatingActionButton onPress={() => setTaskModalVisible(true)} />
       </View>
 
       <SettingsOptionSheet
@@ -190,6 +191,11 @@ export default function TodosScreen() {
         selectedValue={sortMode}
         onClose={() => setSortSheetVisible(false)}
         onSelect={setSortMode}
+      />
+      <TaskFormModal
+        visible={taskModalVisible}
+        initialCategoryId={selectedCategoryId !== 'all' ? selectedCategoryId : undefined}
+        onClose={() => setTaskModalVisible(false)}
       />
     </SafeAreaView>
   );
@@ -264,4 +270,3 @@ const styles = StyleSheet.create({
     paddingTop: 2,
   },
 });
-

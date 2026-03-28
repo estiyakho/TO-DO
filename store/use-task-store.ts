@@ -14,7 +14,7 @@ type TaskStore = {
   addTask: (input: { title: string; description?: string; categoryId?: string }) => void;
   toggleTaskStatus: (id: string) => void;
   deleteTask: (id: string) => void;
-  addCategory: (input: { name: string; description?: string }) => string | null;
+  addCategory: (input: { name: string; description?: string; color?: string }) => string | null;
   resetData: () => void;
   resetStats: () => void;
   resetSettings: () => void;
@@ -24,7 +24,7 @@ type TaskStore = {
   markHydrated: (value: boolean) => void;
 };
 
-const CATEGORY_COLORS = ['#2563EB', '#0F766E', '#7C3AED', '#EA580C', '#E11D48', '#0891B2'];
+const CATEGORY_COLORS = ['#2563EB', '#06B6D4', '#10B981', '#16A34A', '#F59E0B', '#EA580C', '#F43F5E', '#DB2777', '#8B7CF6', '#475569'];
 const CATEGORY_ICONS = [
   'bookmark-outline',
   'folder-open-outline',
@@ -70,7 +70,7 @@ export const useTaskStore = create<TaskStore>()(
         set((state) => ({
           tasks: state.tasks.filter((task) => task.id !== id),
         })),
-      addCategory: ({ name, description }) => {
+      addCategory: ({ name, description, color }) => {
         const trimmedName = name.trim();
         const trimmedDescription = description?.trim() || undefined;
 
@@ -90,7 +90,7 @@ export const useTaskStore = create<TaskStore>()(
           id: `${trimmedName.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`,
           name: trimmedName,
           description: trimmedDescription,
-          color: CATEGORY_COLORS[nextIndex % CATEGORY_COLORS.length],
+          color: color ?? CATEGORY_COLORS[nextIndex % CATEGORY_COLORS.length],
           icon: CATEGORY_ICONS[nextIndex % CATEGORY_ICONS.length],
           createdAt: new Date().toISOString(),
         };

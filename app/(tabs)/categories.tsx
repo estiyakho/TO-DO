@@ -4,6 +4,7 @@ import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-na
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 
+import { CategoryFormModal } from '@/components/category-form-modal';
 import { FloatingActionButton } from '@/components/floating-action-button';
 import { AppFonts } from '@/constants/fonts';
 import { useAppTheme } from '@/hooks/use-app-theme';
@@ -44,6 +45,7 @@ export default function CategoriesScreen() {
 
   const [query, setQuery] = useState('');
   const [activeTab, setActiveTab] = useState<CategoryTab>('active');
+  const [categoryModalVisible, setCategoryModalVisible] = useState(false);
 
   const categorySummaries = useMemo(() => {
     return categories.map((category) => {
@@ -170,8 +172,9 @@ export default function CategoriesScreen() {
           showsVerticalScrollIndicator={false}
         />
 
-        <FloatingActionButton iconName="add" onPress={() => router.push('/add-category')} />
+        <FloatingActionButton iconName="add" onPress={() => setCategoryModalVisible(true)} />
       </View>
+      <CategoryFormModal visible={categoryModalVisible} onClose={() => setCategoryModalVisible(false)} />
     </SafeAreaView>
   );
 }
