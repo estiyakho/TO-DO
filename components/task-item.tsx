@@ -16,12 +16,14 @@ type TaskItemProps = {
   timeFormat: '12h' | '24h';
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
+  onNotAvailable?: (id: string) => void;
   onEdit?: (task: Task) => void;
 };
 
-function TaskItemComponent({ task, category, timeFormat, onToggle, onDelete, onEdit }: TaskItemProps) {
+function TaskItemComponent({ task, category, timeFormat, onToggle, onDelete, onNotAvailable, onEdit }: TaskItemProps) {
   const colors = useAppTheme();
   const done = task.status === 'done';
+  const notAvailable = task.status === 'not-available';
 
   return (
     <View style={[styles.card, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}> 
@@ -68,9 +70,23 @@ function TaskItemComponent({ task, category, timeFormat, onToggle, onDelete, onE
         >
           <Ionicons name="trash-outline" size={16} color={colors.danger} />
         </Pressable>
-        <View style={[styles.countPill, { backgroundColor: colors.surfaceMuted }]}>
-          <Text style={[styles.countText, { color: colors.textMuted }]}>{done ? '1/1' : '0/1'}</Text>
-        </View>
+        {!done && (
+          <Pressable 
+            onPress={() => onNotAvailable?.(task.id)}
+            style={({ pressed }) => [
+              styles.skipButton, 
+              { 
+                backgroundColor: notAvailable ? `${colors.accent}15` : colors.surfaceMuted,
+                borderColor: notAvailable ? colors.accent : colors.border,
+                opacity: pressed ? 0.6 : 1
+              }
+            ]}
+          >
+            <Text style={[styles.skipText, { color: notAvailable ? colors.accent : colors.textSoft }]}>
+              {notAvailable ? 'RESTORE' : 'N/A'}
+            </Text>
+          </Pressable>
+        )}
       </View>
     </View>
   );
@@ -147,26 +163,29 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   rightColumn: {
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 8,
+    justifyContent: 'center',
     marginLeft: 8,
   },
-  countPill: {
-    borderRadius: 12,
-    minWidth: 52,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
+  skipButton: {
+    borderRadius: 10,
+    borderWidth: 1,
+    height: 32,
+    justifyContent: 'center',
+    minWidth: 72,
+    paddingHorizontal: 10,
   },
-  countText: {
-    fontFamily: AppFonts.semibold,
-    fontSize: 13,
+  skipText: {
+    fontFamily: AppFonts.bold,
+    fontSize: 10,
     textAlign: 'center',
   },
   deleteButton: {
     alignItems: 'center',
-    borderRadius: 12,
+    borderRadius: 10,
     height: 32,
     justifyContent: 'center',
-    width: 32,
+    minWidth: 72,
   },
 });

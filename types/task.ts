@@ -1,4 +1,4 @@
-export type TaskStatus = 'todo' | 'done';
+export type TaskStatus = 'todo' | 'done' | 'not-available';
 
 export type ResetInterval = 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
 

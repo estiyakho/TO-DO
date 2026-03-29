@@ -31,6 +31,7 @@ import { runListAnimation } from "@/utils/layout-animation";
 const FILTER_OPTIONS: { label: string; value: TaskStatus }[] = [
   { label: "Doing", value: "todo" },
   { label: "Done", value: "done" },
+  { label: "N/A", value: "not-available" },
 ];
 
 const SORT_OPTIONS = [
@@ -51,6 +52,7 @@ export default function TodosScreen() {
   const categories = useTaskStore((state) => state.categories);
   const toggleTaskStatus = useTaskStore((state) => state.toggleTaskStatus);
   const deleteTask = useTaskStore((state) => state.deleteTask);
+  const setTaskNotAvailable = useTaskStore((state) => state.setTaskNotAvailable);
   const timeFormat = useTaskStore((state) => state.settings.timeFormat);
 
   const initialCategory = Array.isArray(params.categoryId)
@@ -146,6 +148,14 @@ export default function TodosScreen() {
     [],
   );
 
+  const handleNotAvailable = useCallback(
+    (id: string) => {
+      runListAnimation();
+      setTaskNotAvailable(id);
+    },
+    [setTaskNotAvailable],
+  );
+
   const renderTask = useCallback(
     ({ item }: { item: (typeof filteredTasks)[number] }) => (
       <TaskItem
@@ -156,6 +166,7 @@ export default function TodosScreen() {
         timeFormat={timeFormat}
         onDelete={handleDelete}
         onToggle={handleToggle}
+        onNotAvailable={handleNotAvailable}
         onEdit={handleEdit}
       />
     ),

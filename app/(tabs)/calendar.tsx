@@ -344,6 +344,12 @@ export default function CalendarScreen() {
                     </Pressable>
                     <Pressable 
                       onPress={() => deleteScheduledTask(task.id)} 
+                      style={[styles.skipButton, { backgroundColor: colors.surfaceMuted, borderColor: colors.border }]}
+                    >
+                      <Text style={[styles.skipText, { color: colors.textSoft }]}>N/A</Text>
+                    </Pressable>
+                    <Pressable 
+                      onPress={() => deleteScheduledTask(task.id)} 
                       style={[styles.deleteButton, { backgroundColor: `${colors.danger}15`, borderColor: `${colors.danger}30` }]}
                     >
                       <Ionicons name="trash-outline" size={16} color={colors.danger} />
@@ -762,17 +768,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 10,
     borderWidth: 1,
-    height: 34,
+    height: 32,
     justifyContent: 'center',
-    width: 34,
+    minWidth: 54,
   },
   deleteButton: {
     alignItems: 'center',
     borderRadius: 10,
     borderWidth: 1,
-    height: 34,
+    height: 32,
     justifyContent: 'center',
-    width: 34,
+    minWidth: 54,
   },
   emptyBlock: {
     alignItems: 'center',
@@ -942,5 +948,19 @@ const styles = StyleSheet.create({
   secondaryButtonText: {
     fontFamily: AppFonts.bold,
     fontSize: 16,
+  },
+  skipButton: {
+    borderRadius: 10,
+    borderWidth: 1,
+    height: 32,
+    justifyContent: 'center',
+    minWidth: 54,
+    paddingHorizontal: 8,
+    marginLeft: 8,
+  },
+  skipText: {
+    fontFamily: AppFonts.bold,
+    fontSize: 10,
+    textAlign: 'center',
   },
 });

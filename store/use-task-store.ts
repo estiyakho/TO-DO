@@ -48,6 +48,7 @@ type TaskStore = {
     categoryId?: string;
   }) => string | null;
   toggleTaskStatus: (id: string) => void;
+  setTaskNotAvailable: (id: string) => void;
   deleteTask: (id: string) => void;
   addCategory: (input: {
     name: string;
@@ -242,6 +243,12 @@ export const useTaskStore = create<TaskStore>()(
                   status: task.status === "todo" ? "done" : "todo",
                 }
               : task,
+          ),
+        })),
+      setTaskNotAvailable: (id: string) =>
+        set((state) => ({
+          tasks: state.tasks.map((task) =>
+            task.id === id ? { ...task, status: "not-available" } : task,
           ),
         })),
       deleteTask: (id: string) =>
