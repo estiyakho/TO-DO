@@ -55,20 +55,24 @@ export default function CalendarScreen() {
 
   const [currentMonth, setCurrentMonth] = useState(() => new Date());
   const [selectedDay, setSelectedDay] = useState(() => toDayKey(new Date()));
+  const [showAll, setShowAll] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
 
   const weekdayLabels = useMemo(() => getWeekdayLabels(settings.firstDayOfWeek), [settings.firstDayOfWeek]);
+  const todayKey = useMemo(() => toDayKey(new Date()), []);
   const monthGrid = useMemo(
     () => getMonthGrid(currentMonth, settings.firstDayOfWeek),
     [currentMonth, settings.firstDayOfWeek]
   );
   const taskDates = useMemo(() => new Set(scheduledTasks.map((task) => task.date)), [scheduledTasks]);
-  const dayTasks = useMemo(
-    () => scheduledTasks.filter((task) => task.date === selectedDay),
-    [selectedDay, scheduledTasks]
-  );
+  const dayTasks = useMemo(() => {
+    if (showAll) {
+      return scheduledTasks;
+    }
+    return scheduledTasks.filter((task) => task.date === selectedDay);
+  }, [selectedDay, scheduledTasks, showAll]);
 
   const availableGridWidth = Math.max(width - CARD_HORIZONTAL_PADDING - 24, 280);
   const daySize = Math.floor((availableGridWidth - GRID_GAP * (GRID_COLUMNS - 1)) / GRID_COLUMNS);
@@ -115,30 +119,51 @@ export default function CalendarScreen() {
           {monthGrid.map((cell) => {
             const selected = cell.key === selectedDay;
             const hasTasks = taskDates.has(cell.key);
+            const isToday = cell.key === todayKey;
             const labelColor = selected ? readableTextOn(colors.accent) : cell.inCurrentMonth ? colors.text : colors.textMuted;
 
             return (
               <Pressable
                 key={cell.key}
-                onPress={() => setSelectedDay(cell.key)}
+                onPress={() => {
+                  setSelectedDay(cell.key);
+                  setShowAll(false);
+                }}
                 style={[
                   styles.dayCell,
                   {
                     backgroundColor: selected ? colors.accent : 'transparent',
                     height: daySize,
                     width: daySize,
-                    borderWidth: selected ? 0 : 1,
-                    borderColor: cell.inCurrentMonth ? colors.border : `${colors.border}55`,
                   },
                 ]}>
-                <Text style={[styles.dayNumber, { color: labelColor }]}>{cell.date.getDate()}</Text>
-                {hasTasks ? (
+                {isToday && !selected ? (
                   <View
+                    pointerEvents="none"
                     style={[
-                      styles.dayDot,
-                      { backgroundColor: selected ? readableTextOn(colors.accent) : colors.accent },
+                      styles.currentDayFill,
+                      {
+                        backgroundColor: `${colors.accent}66`,
+                      },
                     ]}
                   />
+                ) : null}
+                <Text style={[styles.dayNumber, { color: labelColor }]}>{cell.date.getDate()}</Text>
+                {hasTasks ? (
+                  <>
+                    <View
+                      style={[
+                        styles.dayDotHalo,
+                        { backgroundColor: selected ? `${readableTextOn(colors.accent)}22` : `${colors.accent}22` },
+                      ]}
+                    />
+                    <View
+                      style={[
+                        styles.dayDot,
+                        { backgroundColor: selected ? readableTextOn(colors.accent) : colors.accent },
+                      ]}
+                    />
+                  </>
                 ) : null}
               </Pressable>
             );
@@ -146,7 +171,28 @@ export default function CalendarScreen() {
         </View>
 
         <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Calendar tasks</Text>
+          <Pressable
+            onPress={() => setShowAll((prev) => !prev)}
+            style={[
+              styles.allTasksButton,
+              {
+                backgroundColor: showAll ? colors.accent : colors.surfaceMuted,
+                borderColor: colors.border,
+              },
+            ]}>
+            <Ionicons
+              name="list-outline"
+              size={16}
+              color={showAll ? readableTextOn(colors.accent) : colors.text}
+            />
+            <Text
+              style={[
+                styles.allTasksLabel,
+                { color: showAll ? readableTextOn(colors.accent) : colors.text },
+              ]}>
+              All tasks
+            </Text>
+          </Pressable>
           {dayTasks.length ? (
             <Text style={[styles.sectionCount, { color: colors.textMuted }]}>{dayTasks.length}</Text>
           ) : null}
@@ -289,6 +335,7 @@ const styles = StyleSheet.create({
   dayCell: {
     alignItems: 'center',
     borderRadius: 14,
+    position: 'relative',
     justifyContent: 'center',
     paddingVertical: 6,
   },
@@ -300,8 +347,21 @@ const styles = StyleSheet.create({
   dayDot: {
     borderRadius: 999,
     height: 6,
-    marginTop: 6,
     width: 6,
+    position: 'absolute',
+    bottom: 4,
+  },
+  dayDotHalo: {
+    borderRadius: 999,
+    height: 12,
+    width: 12,
+    position: 'absolute',
+    bottom: 1,
+  },
+  currentDayFill: {
+    position: 'absolute',
+    inset: 0,
+    borderRadius: 14,
   },
   sectionHeader: {
     alignItems: 'center',
@@ -309,14 +369,23 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     paddingHorizontal: 2,
   },
-  sectionTitle: {
-    fontFamily: AppFonts.bold,
-    fontSize: 17,
-  },
   sectionCount: {
     fontFamily: AppFonts.semibold,
     fontSize: 13,
-    marginLeft: 8,
+    marginLeft: 'auto',
+  },
+  allTasksButton: {
+    alignItems: 'center',
+    borderRadius: 12,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  allTasksLabel: {
+    fontFamily: AppFonts.semibold,
+    fontSize: 14,
   },
   body: {
     flexGrow: 1,
