@@ -219,6 +219,7 @@ const styles = StyleSheet.create({
     fontFamily: AppFonts.semibold,
     fontSize: 14,
     marginBottom: 8,
+    paddingLeft: 4,
   },
   input: {
     borderRadius: 18,

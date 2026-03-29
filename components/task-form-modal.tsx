@@ -69,7 +69,7 @@ export function TaskFormModal({ visible, initialCategoryId, onClose }: TaskFormM
 
               <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
                 <View style={styles.form}>
-                  <View>
+                  <View style={styles.formField}>
                     <View style={styles.categoryHeader}>
                       <Text style={[styles.label, { color: colors.textSoft }]}>Category</Text>
                       <Pressable onPress={() => setCategoryModalVisible(true)}>
@@ -105,7 +105,7 @@ export function TaskFormModal({ visible, initialCategoryId, onClose }: TaskFormM
                     </View>
                   </View>
 
-                  <View>
+                  <View style={styles.formField}>
                     <Text style={[styles.label, { color: colors.textSoft }]}>Title</Text>
                     <TextInput
                       autoFocus
@@ -117,7 +117,7 @@ export function TaskFormModal({ visible, initialCategoryId, onClose }: TaskFormM
                     />
                   </View>
 
-                  <View>
+                  <View style={styles.formField}>
                     <Text style={[styles.label, { color: colors.textSoft }]}>Description</Text>
                     <TextInput
                       multiline
@@ -206,10 +206,16 @@ const styles = StyleSheet.create({
   form: {
     gap: 14,
   },
+  formField: {
+    alignSelf: 'center',
+    width: '100%',
+    maxWidth: 520,
+  },
   label: {
     fontFamily: AppFonts.semibold,
     fontSize: 14,
     marginBottom: 8,
+    paddingLeft: 4,
   },
   input: {
     borderRadius: 18,

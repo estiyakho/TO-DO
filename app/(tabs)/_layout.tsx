@@ -46,13 +46,14 @@ export default function TabLayout() {
         tabBarLabel: ({ color, children }) => {
           const label = String(children);
           const fontSize = label === 'Statistics' ? baseLabelSize - 1.8 : label === 'Categories' ? baseLabelSize - 1.25 : baseLabelSize;
+          const fontFamily = label === 'Categories' || label === 'All Todos' ? AppFonts.bold : AppFonts.semibold;
 
           return (
             <Text
               numberOfLines={1}
               style={{
                 color,
-                fontFamily: AppFonts.semibold,
+                fontFamily,
                 fontSize,
                 includeFontPadding: false,
                 lineHeight: fontSize + 2,
