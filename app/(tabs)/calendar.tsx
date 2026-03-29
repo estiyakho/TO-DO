@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useMemo, useState, useRef, useEffect } from 'react';
+import { BlurView } from 'expo-blur';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  FlatList,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -10,14 +10,10 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  View,
   useWindowDimensions,
-  NativeSyntheticEvent,
-  NativeScrollEvent,
+  View
 } from 'react-native';
-import { BlurView } from 'expo-blur';
-import * as Haptics from 'expo-haptics';
-import { GestureDetector, Gesture } from 'react-native-gesture-handler';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { FadeIn, FadeOut, LinearTransition, runOnJS, SlideInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -67,12 +63,12 @@ export default function CalendarScreen() {
   const HOURS = Array.from({ length: 12 }, (_, i) => i + 1);
   const MINUTES = Array.from({ length: 60 }, (_, i) => i);
   const PERIODS = ['AM', 'PM'] as const;
-  
+
   // Multiple sets for "infinite" feeling
   const INFINITE_HOURS = [...HOURS, ...HOURS, ...HOURS];
   const INFINITE_MINUTES = [...MINUTES, ...MINUTES, ...MINUTES];
   const INFINITE_PERIODS = [...PERIODS, ...PERIODS, ...PERIODS];
-  const ITEM_HEIGHT = 52; // 44 item + 4 margin top + 4 margin bottom
+  const ITEM_HEIGHT = 48; // Final fixed height for items
 
   // Reset scroll to middle set on mount
   useEffect(() => {
@@ -124,9 +120,9 @@ export default function CalendarScreen() {
       timeStr = `${h24.toString().padStart(2, '0')}:${selectedMinute.toString().padStart(2, '0')}:00`;
     }
 
-    addScheduledTask({ 
-      title: trimmed, 
-      description, 
+    addScheduledTask({
+      title: trimmed,
+      description,
       date: selectedDay,
       time: timeStr,
     });
@@ -149,7 +145,7 @@ export default function CalendarScreen() {
         } else if (e.translationX > 50) {
           runOnJS(goToPrevMonth)();
         }
-      } 
+      }
       // Vertical swipe (Collapse/Expand)
       else {
         if (e.translationY < -50) {
@@ -161,8 +157,8 @@ export default function CalendarScreen() {
     });
 
   return (
-    <SafeAreaView edges={['top']} style={[styles.safeArea, { backgroundColor: colors.background }]}> 
-      <View style={[styles.container, { backgroundColor: colors.background }]}> 
+    <SafeAreaView edges={['top']} style={[styles.safeArea, { backgroundColor: colors.background }]}>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.header}>
           <View style={styles.headerSide}>
             <Pressable
@@ -171,13 +167,13 @@ export default function CalendarScreen() {
               <Ionicons name="chevron-back" size={20} color={colors.text} />
             </Pressable>
           </View>
-          
+
           <Text style={[styles.monthTitle, { color: colors.text }]}>{formatMonthLabel(currentMonth)}</Text>
-          
+
           <View style={[styles.headerSide, styles.headerSideRight]}>
-            <Pressable 
+            <Pressable
               onPress={() => setIsCollapsed(!isCollapsed)}
-              style={[styles.modePill, { backgroundColor: colors.surfaceMuted, borderColor: colors.border }]}> 
+              style={[styles.modePill, { backgroundColor: colors.surfaceMuted, borderColor: colors.border }]}>
               <Text style={[styles.modeText, { color: colors.textMuted }]}>{isCollapsed ? '2 Weeks' : 'Month'}</Text>
               <Ionicons name={isCollapsed ? 'chevron-down' : 'chevron-up'} size={12} color={colors.textMuted} style={{ marginLeft: 4 }} />
             </Pressable>
@@ -190,10 +186,10 @@ export default function CalendarScreen() {
         </View>
 
         <GestureDetector gesture={swipeGesture}>
-          <Animated.View 
-            key={`${currentMonth.toISOString()}-${isCollapsed}`} 
+          <Animated.View
+            key={`${currentMonth.toISOString()}-${isCollapsed}`}
             layout={LinearTransition.springify().damping(18)}
-            entering={FadeIn.duration(300)} 
+            entering={FadeIn.duration(300)}
             exiting={FadeOut.duration(200)}
             style={styles.calendarLayer}
           >
@@ -205,7 +201,7 @@ export default function CalendarScreen() {
               ))}
             </View>
 
-            <View style={[styles.grid, { gap: GRID_GAP }]}> 
+            <View style={[styles.grid, { gap: GRID_GAP }]}>
               {displayGrid.map((cell) => {
                 const selected = cell.key === selectedDay;
                 const hasTasks = taskDates.has(cell.key);
@@ -295,7 +291,7 @@ export default function CalendarScreen() {
             dayTasks.map((task) => (
               <View
                 key={task.id}
-                style={[styles.todoCard, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}> 
+                style={[styles.todoCard, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}>
                 <View style={styles.todoHeader}>
                   <Text style={[styles.todoTitle, { color: colors.text }]}>{task.title}</Text>
                   <Pressable onPress={() => deleteScheduledTask(task.id)} style={styles.deleteButton}>
@@ -322,8 +318,8 @@ export default function CalendarScreen() {
       </View>
 
       <Modal animationType="none" transparent visible={showAddModal} onRequestClose={() => setShowAddModal(false)}>
-        <Animated.View 
-          entering={FadeIn.duration(300)} 
+        <Animated.View
+          entering={FadeIn.duration(300)}
           exiting={FadeOut.duration(200)}
           style={StyleSheet.absoluteFill}
         >
@@ -335,7 +331,7 @@ export default function CalendarScreen() {
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           style={styles.modalWrapper}>
-          <Animated.View 
+          <Animated.View
             entering={SlideInDown.duration(400)}
             exiting={FadeOut.duration(200)}
             style={[styles.modalCard, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}
@@ -344,183 +340,191 @@ export default function CalendarScreen() {
             <Text style={[styles.modalTitle, { color: colors.text }]}>New reminder</Text>
             <Text style={[styles.modalSubtitle, { color: colors.textMuted }]}>Alert for {selectedDay}</Text>
 
-            <View style={styles.formField}>
-              <Text style={[styles.label, { color: colors.textSoft }]}>Title</Text>
-              <TextInput
-                autoFocus
-                onChangeText={setTitle}
-                placeholder="What should I remind you about?"
-                placeholderTextColor="#64748B"
-                style={[styles.modalInput, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.text }]}
-                value={title}
-              />
-            </View>
-
-            <View style={styles.formField}>
-              <Text style={[styles.label, { color: colors.textSoft }]}>Notes</Text>
-              <TextInput
-                multiline
-                onChangeText={setDescription}
-                placeholder="Optional details"
-                placeholderTextColor="#64748B"
-                style={[styles.modalInput, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.text }]}
-                textAlignVertical="top"
-                value={description}
-              />
-            </View>
-
-            <View style={styles.formField}>
-              <View style={styles.labelRow}>
-                <Text style={[styles.label, { color: colors.textSoft }]}>Remind me at</Text>
-                <Pressable 
-                  onPress={() => setUseTime(!useTime)}
-                  style={[styles.toggleBtn, { backgroundColor: useTime ? colors.accent : colors.surfaceMuted }]}>
-                  <Text style={[styles.toggleText, { color: useTime ? '#FFF' : colors.textMuted }]}>
-                    {useTime ? 'ON' : 'OFF'}
-                  </Text>
-                </Pressable>
+            <ScrollView 
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.modalScrollContent}>
+              <View style={styles.formField}>
+                <Text style={[styles.label, { color: colors.textSoft }]}>Reminder Title</Text>
+                <TextInput
+                  autoFocus
+                  onChangeText={setTitle}
+                  placeholder="e.g., Dentist Appointment"
+                  placeholderTextColor="#64748B"
+                  style={[styles.modalInput, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.text }]}
+                  value={title}
+                />
               </View>
-              
-              {useTime && (
-                <View style={styles.timePickerContainer}>
-                  <View style={styles.pickerRow}>
-                    {/* Hours column */}
-                    <View style={styles.pickerCol}>
-                      <Text style={[styles.pickerColLabel, { color: colors.textMuted }]}>Hour</Text>
-                      <ScrollView 
-                        ref={hourScrollRef}
-                        showsVerticalScrollIndicator={false}
-                        snapToInterval={ITEM_HEIGHT}
-                        decelerationRate="fast"
-                        style={styles.colScroll}
-                        onMomentumScrollEnd={(e) => {
-                          const y = e.nativeEvent.contentOffset.y;
-                          const index = Math.round(y / ITEM_HEIGHT);
-                          const realIndex = index % 12;
-                          setSelectedHour(HOURS[realIndex]);
-                          
-                          // Invisible loop reset
-                          if (index < 12 || index >= 24) {
-                            hourScrollRef.current?.scrollTo({ y: (realIndex + 12) * ITEM_HEIGHT, animated: false });
-                          }
-                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                        }}
-                      >
-                        {INFINITE_HOURS.map((h, i) => (
-                          <Pressable 
-                            key={i} 
-                            onPress={() => {
-                              setSelectedHour(h);
-                              // Calculate middle-set index for focus
-                              hourScrollRef.current?.scrollTo({ y: (i % 12 + 12) * ITEM_HEIGHT, animated: true });
-                              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                            }}
-                            style={[
-                              styles.pickerItem, 
-                              { backgroundColor: selectedHour === h ? colors.accent : 'transparent' }
-                            ]}
-                          >
-                            <Text style={[styles.pickerItemText, { color: selectedHour === h ? '#FFF' : colors.text }]}>
-                              {h}
-                            </Text>
-                          </Pressable>
-                        ))}
-                      </ScrollView>
-                    </View>
 
-                    {/* Minutes column */}
-                    <View style={styles.pickerCol}>
-                      <Text style={[styles.pickerColLabel, { color: colors.textMuted }]}>Min</Text>
-                      <ScrollView 
-                        ref={minScrollRef}
-                        showsVerticalScrollIndicator={false}
-                        snapToInterval={ITEM_HEIGHT}
-                        decelerationRate="fast"
-                        style={styles.colScroll}
-                        onMomentumScrollEnd={(e) => {
-                          const y = e.nativeEvent.contentOffset.y;
-                          const index = Math.round(y / ITEM_HEIGHT);
-                          const realIndex = index % 60;
-                          const val = MINUTES[realIndex];
-                          setSelectedMinute(val);
-                          
-                          // Invisible loop reset
-                          if (index < 60 || index >= 120) {
-                            minScrollRef.current?.scrollTo({ y: (realIndex + 60) * ITEM_HEIGHT, animated: false });
-                          }
-                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                        }}
-                      >
-                        {INFINITE_MINUTES.map((m, i) => {
-                          return (
+              <View style={styles.formField}>
+                <Text style={[styles.label, { color: colors.textSoft }]}>Notes</Text>
+                <TextInput
+                  multiline
+                  onChangeText={setDescription}
+                  placeholder="Optional details"
+                  placeholderTextColor="#64748B"
+                  style={[styles.modalInput, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.text }]}
+                  textAlignVertical="top"
+                  value={description}
+                />
+              </View>
+
+              <View style={styles.formField}>
+                <Pressable 
+                  onPress={() => {
+                    setUseTime(!useTime);
+                  }}
+                  style={styles.labelRow}>
+                  <Text style={[styles.label, { color: colors.textSoft }]}>Remind me at</Text>
+                  <View 
+                    style={[styles.toggleBtn, { backgroundColor: useTime ? colors.accent : colors.surfaceMuted }]}>
+                    <Text style={[styles.toggleText, { color: useTime ? '#FFF' : colors.textMuted }]}>
+                      {useTime ? 'ON' : 'OFF'}
+                    </Text>
+                  </View>
+                </Pressable>
+                
+                {useTime && (
+                  <View style={styles.timePickerContainer}>
+                    <View style={styles.pickerRow}>
+                      {/* Hours column */}
+                      <View style={styles.pickerCol}>
+                        <Text style={[styles.pickerColLabel, { color: colors.textMuted }]}>Hour</Text>
+                        <ScrollView 
+                          ref={hourScrollRef}
+                          showsVerticalScrollIndicator={false}
+                          snapToInterval={ITEM_HEIGHT}
+                          decelerationRate="fast"
+                          disableIntervalMomentum={true}
+                          style={styles.colScroll}
+                          onMomentumScrollEnd={(e) => {
+                            const y = e.nativeEvent.contentOffset.y;
+                            const index = Math.round(y / ITEM_HEIGHT);
+                            const realIndex = index % 12;
+                            setSelectedHour(HOURS[realIndex]);
+                            
+                            // Invisible loop reset
+                            if (index < 12 || index >= 24) {
+                              hourScrollRef.current?.scrollTo({ y: (realIndex + 12) * ITEM_HEIGHT, animated: false });
+                            }
+                          }}
+                        >
+                          {INFINITE_HOURS.map((h, i) => (
                             <Pressable 
                               key={i} 
                               onPress={() => {
-                                setSelectedMinute(m);
-                                minScrollRef.current?.scrollTo({ y: (i % 60 + 60) * ITEM_HEIGHT, animated: true });
-                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                setSelectedHour(h);
+                                // Calculate middle-set index for focus
+                                hourScrollRef.current?.scrollTo({ y: (i % 12 + 12) * ITEM_HEIGHT, animated: true });
                               }}
                               style={[
                                 styles.pickerItem, 
-                                { backgroundColor: selectedMinute === m ? colors.accent : 'transparent' }
+                                { backgroundColor: selectedHour === h ? colors.accent : 'transparent' }
                               ]}
                             >
-                              <Text style={[styles.pickerItemText, { color: selectedMinute === m ? '#FFF' : colors.text }]}>
-                                {m.toString().padStart(2, '0')}
+                              <Text style={[styles.pickerItemText, { color: selectedHour === h ? '#FFF' : colors.text }]}>
+                                {h}
                               </Text>
                             </Pressable>
-                          );
-                        })}
-                      </ScrollView>
-                    </View>
+                          ))}
+                        </ScrollView>
+                      </View>
 
-                    {/* AM/PM column */}
-                    <View style={styles.pickerCol}>
-                      <Text style={[styles.pickerColLabel, { color: colors.textMuted }]}>AM/PM</Text>
-                      <ScrollView 
-                        ref={periodScrollRef}
-                        showsVerticalScrollIndicator={false}
-                        snapToInterval={ITEM_HEIGHT}
-                        decelerationRate="fast"
-                        style={styles.colScroll}
-                        onMomentumScrollEnd={(e) => {
-                          const y = e.nativeEvent.contentOffset.y;
-                          const index = Math.round(y / ITEM_HEIGHT);
-                          const realIndex = index % 2;
-                          const val = PERIODS[realIndex];
-                          setPeriod(val);
-                          
-                          // Invisible loop reset
-                          if (index < 2 || index >= 4) {
-                            periodScrollRef.current?.scrollTo({ y: (realIndex + 2) * ITEM_HEIGHT, animated: false });
-                          }
-                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                        }}
-                      >
-                        {INFINITE_PERIODS.map((p, i) => (
-                          <Pressable 
-                            key={i} 
-                            onPress={() => {
-                              setPeriod(p);
-                              periodScrollRef.current?.scrollTo({ y: (i % 2 + 2) * ITEM_HEIGHT, animated: true });
-                              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                            }}
-                            style={[
-                              styles.pickerItem, 
-                              { backgroundColor: period === p ? colors.accent : 'transparent' }
-                            ]}
-                          >
-                            <Text style={[styles.pickerItemText, { color: period === p ? '#FFF' : colors.text }]}>
-                              {p}
-                            </Text>
-                          </Pressable>
-                        ))}
-                      </ScrollView>
+                      {/* Minutes column */}
+                      <View style={styles.pickerCol}>
+                        <Text style={[styles.pickerColLabel, { color: colors.textMuted }]}>Min</Text>
+                        <ScrollView 
+                          ref={minScrollRef}
+                          showsVerticalScrollIndicator={false}
+                          snapToInterval={ITEM_HEIGHT}
+                          decelerationRate="fast"
+                          disableIntervalMomentum={true}
+                          style={styles.colScroll}
+                          onMomentumScrollEnd={(e) => {
+                            const y = e.nativeEvent.contentOffset.y;
+                            const index = Math.round(y / ITEM_HEIGHT);
+                            const realIndex = index % 60;
+                            const val = MINUTES[realIndex];
+                            setSelectedMinute(val);
+                            
+                            // Invisible loop reset
+                            if (index < 60 || index >= 120) {
+                              minScrollRef.current?.scrollTo({ y: (realIndex + 60) * ITEM_HEIGHT, animated: false });
+                            }
+                          }}
+                          // Improve snap reliability
+                          scrollEventThrottle={16}
+                          snapToAlignment="start"
+                          nestedScrollEnabled={true}
+                        >
+                          {INFINITE_MINUTES.map((m, i) => {
+                            return (
+                              <Pressable 
+                                key={i} 
+                                onPress={() => {
+                                  setSelectedMinute(m);
+                                  minScrollRef.current?.scrollTo({ y: (i % 60 + 60) * ITEM_HEIGHT, animated: true });
+                                }}
+                                style={[
+                                  styles.pickerItem, 
+                                  { backgroundColor: selectedMinute === m ? colors.accent : 'transparent' }
+                                ]}
+                              >
+                                <Text style={[styles.pickerItemText, { color: selectedMinute === m ? '#FFF' : colors.text }]}>
+                                  {m.toString().padStart(2, '0')}
+                                </Text>
+                              </Pressable>
+                            );
+                          })}
+                        </ScrollView>
+                      </View>
+
+                      {/* AM/PM column */}
+                      <View style={styles.pickerCol}>
+                        <Text style={[styles.pickerColLabel, { color: colors.textMuted }]}>AM/PM</Text>
+                        <ScrollView 
+                          ref={periodScrollRef}
+                          showsVerticalScrollIndicator={false}
+                          snapToInterval={ITEM_HEIGHT}
+                          decelerationRate={0.85}
+                          disableIntervalMomentum={true}
+                          style={styles.colScroll}
+                          onMomentumScrollEnd={(e) => {
+                            const y = e.nativeEvent.contentOffset.y;
+                            const index = Math.round(y / ITEM_HEIGHT);
+                            const realIndex = index % 2;
+                            const val = PERIODS[realIndex];
+                            setPeriod(val);
+                            
+                            // Invisible loop reset
+                            if (index < 2 || index >= 4) {
+                              periodScrollRef.current?.scrollTo({ y: (realIndex + 2) * ITEM_HEIGHT, animated: false });
+                            }
+                          }}
+                        >
+                          {INFINITE_PERIODS.map((p, i) => (
+                            <Pressable 
+                              key={i} 
+                              onPress={() => {
+                                setPeriod(p);
+                                periodScrollRef.current?.scrollTo({ y: (i % 2 + 2) * ITEM_HEIGHT, animated: true });
+                              }}
+                              style={[
+                                styles.pickerItem, 
+                                { backgroundColor: period === p ? colors.accent : 'transparent' }
+                              ]}
+                            >
+                              <Text style={[styles.pickerItemText, { color: period === p ? '#FFF' : colors.text }]}>
+                                {p}
+                              </Text>
+                            </Pressable>
+                          ))}
+                        </ScrollView>
+                      </View>
                     </View>
                   </View>
-                </View>
-              )}
-            </View>
+                )}
+              </View>
+            </ScrollView>
 
             <View style={styles.modalActions}>
               <Pressable
@@ -715,23 +719,25 @@ const styles = StyleSheet.create({
     top: 0,
   },
   modalWrapper: {
-    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
     flex: 1,
-    justifyContent: 'flex-end',
-    padding: 16,
-    paddingBottom: Platform.OS === 'ios' ? 40 : 20,
+    justifyContent: 'center',
+    padding: 20,
   },
   modalCard: {
     borderRadius: 32,
     borderWidth: 1,
-    gap: 16,
-    padding: 24,
-    width: '100%',
+    elevation: 5,
+    maxHeight: '85%',
+    overflow: 'hidden',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    elevation: 8,
+    shadowOffset: { height: 4, width: 0 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+  },
+  modalScrollContent: {
+    padding: 24,
+    paddingBottom: 12,
   },
   handleBar: {
     alignSelf: 'center',
@@ -752,7 +758,8 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   formField: {
-    gap: 10,
+    gap: 8,
+    marginBottom: 20,
   },
   label: {
     fontFamily: AppFonts.semibold,
@@ -770,6 +777,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
+    marginBottom: 8,
   },
   toggleBtn: {
     borderRadius: 10,
@@ -802,24 +810,25 @@ const styles = StyleSheet.create({
   colScroll: {
     backgroundColor: '#00000018',
     borderRadius: 12,
-    height: 52, // Height of exactly one item + margins
+    height: 48, // Matches ITEM_HEIGHT exactly
     width: '100%',
   },
   pickerItem: {
     alignItems: 'center',
-    borderRadius: 8,
-    height: 44,
+    borderRadius: 12,
+    height: 48, // Matches ITEM_HEIGHT exactly
     justifyContent: 'center',
-    margin: 4,
   },
   pickerItemText: {
     fontFamily: AppFonts.bold,
     fontSize: 20, // Larger font since only one is shown
   },
   modalActions: {
+    borderTopWidth: 1,
     flexDirection: 'row',
     gap: 12,
-    marginTop: 8,
+    padding: 24,
+    paddingTop: 16,
   },
   primaryButton: {
     alignItems: 'center',
