@@ -342,6 +342,7 @@ export const useTaskStore = create<TaskStore>()(
           settings: {
             ...DEFAULT_SETTINGS,
             statsResetAt: state.settings.statsResetAt,
+            hasCompletedNotificationOnboarding: state.settings.hasCompletedNotificationOnboarding,
           },
         })),
       updateSettings: (patch) =>

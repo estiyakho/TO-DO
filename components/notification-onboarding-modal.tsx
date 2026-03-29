@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
-import Animated, { FadeIn, FadeOut, SlideInDown } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut, ZoomIn, ZoomOut } from 'react-native-reanimated';
 
 import { AppFonts } from '@/constants/fonts';
 import { useAppTheme } from '@/hooks/use-app-theme';
@@ -34,7 +34,8 @@ export function NotificationOnboardingModal({ visible, onComplete }: Notificatio
         />
 
         <Animated.View 
-          entering={SlideInDown.springify().damping(18)}
+          entering={ZoomIn.duration(200)}
+          exiting={ZoomOut.duration(150)}
           style={[styles.card, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}
         >
           <View style={[styles.iconWrap, { backgroundColor: `${colors.accent}16` }]}>
@@ -95,14 +96,14 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     flex: 1,
-    justifyContent: 'flex-end',
-    padding: 16,
+    justifyContent: 'center',
+    paddingHorizontal: 24,
   },
   card: {
     alignItems: 'center',
-    borderRadius: 36,
+    borderRadius: 32,
     borderWidth: 1,
-    padding: 32,
+    padding: 28,
     width: '100%',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
