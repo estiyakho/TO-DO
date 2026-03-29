@@ -5,6 +5,7 @@ import { ReactNode, useState } from 'react';
 
 import { ColorOptionSheet } from '@/components/color-option-sheet';
 import { AppFonts } from '@/constants/fonts';
+import { ModernConfirmationModal } from '@/components/modern-confirmation-modal';
 import { SettingsOptionSheet } from '@/components/settings-option-sheet';
 import { useAppTheme } from '@/hooks/use-app-theme';
 import { useTaskStore } from '@/store/use-task-store';
@@ -171,6 +172,17 @@ export default function SettingsScreen() {
   const resetStats = useTaskStore((state) => state.resetStats);
   const resetSettings = useTaskStore((state) => state.resetSettings);
   const [activeSheet, setActiveSheet] = useState<SheetKey>(null);
+  const [confirmConfig, setConfirmConfig] = useState<{
+    visible: boolean;
+    title: string;
+    message: string;
+    action: () => void;
+  }>({
+    visible: false,
+    title: '',
+    message: '',
+    action: () => {},
+  });
 
   const openSheet = (sheet: SheetKey) => setActiveSheet(sheet);
   const closeSheet = () => setActiveSheet(null);
@@ -195,14 +207,12 @@ export default function SettingsScreen() {
               action: resetSettings,
             };
 
-    Alert.alert(config.title, config.message, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Continue',
-        style: 'destructive',
-        onPress: () => config.action(),
-      },
-    ]);
+    setConfirmConfig({
+      visible: true,
+      title: config.title,
+      message: config.message,
+      action: config.action,
+    });
   };
 
   return (
@@ -256,6 +266,17 @@ export default function SettingsScreen() {
       <SettingsOptionSheet visible={activeSheet === 'language'} title="Language" iconName="language-outline" options={LANGUAGES} selectedValue={settings.language} onClose={closeSheet} onSelect={(value) => updateSettings({ language: value })} />
       <SettingsOptionSheet visible={activeSheet === 'resetInterval'} title="Reset Interval" iconName="refresh-circle-outline" options={RESET_OPTIONS} selectedValue={settings.resetInterval} onClose={closeSheet} onSelect={(value) => setResetInterval(value)} />
       <SettingsOptionSheet visible={activeSheet === 'resetNow'} title="Reset Now" iconName="trash-outline" options={RESET_ACTIONS} tone="danger" onClose={closeSheet} onSelect={handleResetSelection} />
+
+      <ModernConfirmationModal
+        visible={confirmConfig.visible}
+        title={confirmConfig.title}
+        message={confirmConfig.message}
+        onConfirm={confirmConfig.action}
+        onClose={() => setConfirmConfig((prev) => ({ ...prev, visible: false }))}
+        tone="danger"
+        iconName="trash-outline"
+        confirmText="Confirm Reset"
+      />
     </SafeAreaView>
   );
 }

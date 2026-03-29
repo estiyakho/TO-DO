@@ -12,6 +12,8 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
+import { GestureDetector, Gesture } from 'react-native-gesture-handler';
+import Animated, { FadeIn, FadeOut, runOnJS } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { FloatingActionButton } from '@/components/floating-action-button';
@@ -22,7 +24,7 @@ import { getMonthGrid, getWeekdayLabels } from '@/utils/calendar';
 import { formatMonthLabel, toDayKey } from '@/utils/date';
 
 const GRID_COLUMNS = 7;
-const GRID_GAP = 10;
+const GRID_GAP = 6;
 const CARD_HORIZONTAL_PADDING = 28;
 
 function parseHexColor(value: string) {
@@ -74,7 +76,7 @@ export default function CalendarScreen() {
     return scheduledTasks.filter((task) => task.date === selectedDay);
   }, [selectedDay, scheduledTasks, showAll]);
 
-  const availableGridWidth = Math.max(width - CARD_HORIZONTAL_PADDING - 24, 280);
+  const availableGridWidth = width - (14 * 2); // Full width within container padding
   const daySize = Math.floor((availableGridWidth - GRID_GAP * (GRID_COLUMNS - 1)) / GRID_COLUMNS);
 
   const handleSaveTask = () => {
@@ -87,88 +89,116 @@ export default function CalendarScreen() {
     setShowAddModal(false);
   };
 
+  const goToNextMonth = () => setCurrentMonth((value) => new Date(value.getFullYear(), value.getMonth() + 1, 1));
+  const goToPrevMonth = () => setCurrentMonth((value) => new Date(value.getFullYear(), value.getMonth() - 1, 1));
+
+  const swipeGesture = Gesture.Pan()
+    .activeOffsetX([-20, 20])
+    .onEnd((e) => {
+      if (e.translationX < -50) {
+        runOnJS(goToNextMonth)();
+      } else if (e.translationX > 50) {
+        runOnJS(goToPrevMonth)();
+      }
+    });
+
   return (
     <SafeAreaView edges={['top']} style={[styles.safeArea, { backgroundColor: colors.background }]}> 
       <View style={[styles.container, { backgroundColor: colors.background }]}> 
         <View style={styles.header}>
-          <Pressable
-            onPress={() => setCurrentMonth((value) => new Date(value.getFullYear(), value.getMonth() - 1, 1))}
-            style={styles.headerIcon}>
-            <Ionicons name="chevron-back" size={20} color={colors.text} />
-          </Pressable>
+          <View style={styles.headerSide}>
+            <Pressable
+              onPress={goToPrevMonth}
+              style={styles.headerIcon}>
+              <Ionicons name="chevron-back" size={20} color={colors.text} />
+            </Pressable>
+          </View>
+          
           <Text style={[styles.monthTitle, { color: colors.text }]}>{formatMonthLabel(currentMonth)}</Text>
-          <Pressable style={[styles.modePill, { backgroundColor: colors.surfaceMuted, borderColor: colors.border }]}> 
-            <Text style={[styles.modeText, { color: colors.textMuted }]}>Month</Text>
-          </Pressable>
-          <Pressable
-            onPress={() => setCurrentMonth((value) => new Date(value.getFullYear(), value.getMonth() + 1, 1))}
-            style={styles.headerIcon}>
-            <Ionicons name="chevron-forward" size={20} color={colors.text} />
-          </Pressable>
+          
+          <View style={[styles.headerSide, styles.headerSideRight]}>
+            <View style={[styles.modePill, { backgroundColor: colors.surfaceMuted, borderColor: colors.border }]}> 
+              <Text style={[styles.modeText, { color: colors.textMuted }]}>Month</Text>
+            </View>
+            <Pressable
+              onPress={goToNextMonth}
+              style={styles.headerIcon}>
+              <Ionicons name="chevron-forward" size={20} color={colors.text} />
+            </Pressable>
+          </View>
         </View>
 
-        <View style={styles.weekRow}>
-          {weekdayLabels.map((label) => (
-            <Text key={label} style={[styles.weekday, { color: colors.textMuted }]}>
-              {label}
-            </Text>
-          ))}
-        </View>
+        <GestureDetector gesture={swipeGesture}>
+          <Animated.View 
+            key={currentMonth.toISOString()} 
+            entering={FadeIn.duration(300)} 
+            exiting={FadeOut.duration(200)}
+            style={styles.calendarLayer}
+          >
+            <View style={[styles.weekRow, { gap: GRID_GAP }]}>
+              {weekdayLabels.map((label) => (
+                <Text key={label} style={[styles.weekday, { color: colors.textMuted, width: daySize }]}>
+                  {label}
+                </Text>
+              ))}
+            </View>
 
-        <View style={[styles.grid, { gap: GRID_GAP }]}> 
-          {monthGrid.map((cell) => {
-            const selected = cell.key === selectedDay;
-            const hasTasks = taskDates.has(cell.key);
-            const isToday = cell.key === todayKey;
-            const labelColor = selected ? readableTextOn(colors.accent) : cell.inCurrentMonth ? colors.text : colors.textMuted;
+            <View style={[styles.grid, { gap: GRID_GAP }]}> 
+              {monthGrid.map((cell) => {
+                const selected = cell.key === selectedDay;
+                const hasTasks = taskDates.has(cell.key);
+                const isToday = cell.key === todayKey;
+                const labelColor = selected ? readableTextOn(colors.accent) : cell.inCurrentMonth ? colors.text : colors.textMuted;
 
-            return (
-              <Pressable
-                key={cell.key}
-                onPress={() => {
-                  setSelectedDay(cell.key);
-                  setShowAll(false);
-                }}
-                style={[
-                  styles.dayCell,
-                  {
-                    backgroundColor: selected ? colors.accent : 'transparent',
-                    height: daySize,
-                    width: daySize,
-                  },
-                ]}>
-                {isToday && !selected ? (
-                  <View
-                    pointerEvents="none"
+                return (
+                  <Pressable
+                    key={cell.key}
+                    onPress={() => {
+                      setSelectedDay(cell.key);
+                      setShowAll(false);
+                    }}
                     style={[
-                      styles.currentDayFill,
+                      styles.dayCell,
                       {
-                        backgroundColor: `${colors.accent}66`,
+                        backgroundColor: selected ? colors.accent : 'transparent',
+                        height: daySize * 0.75,
+                        width: daySize,
                       },
-                    ]}
-                  />
-                ) : null}
-                <Text style={[styles.dayNumber, { color: labelColor }]}>{cell.date.getDate()}</Text>
-                {hasTasks ? (
-                  <>
-                    <View
-                      style={[
-                        styles.dayDotHalo,
-                        { backgroundColor: selected ? `${readableTextOn(colors.accent)}22` : `${colors.accent}22` },
-                      ]}
-                    />
-                    <View
-                      style={[
-                        styles.dayDot,
-                        { backgroundColor: selected ? readableTextOn(colors.accent) : colors.accent },
-                      ]}
-                    />
-                  </>
-                ) : null}
-              </Pressable>
-            );
-          })}
-        </View>
+                    ]}>
+                    {isToday && !selected ? (
+                      <View
+                        pointerEvents="none"
+                        style={[
+                          styles.currentDayFill,
+                          {
+                            backgroundColor: `${colors.accent}66`,
+                          },
+                        ]}
+                      />
+                    ) : null}
+                    <Text style={[styles.dayNumber, { color: labelColor }]}>{cell.date.getDate()}</Text>
+                    {hasTasks ? (
+                      <>
+                        <View
+                          style={[
+                            styles.dayDotHalo,
+                            { backgroundColor: selected ? `${readableTextOn(colors.accent)}22` : `${colors.accent}22` },
+                          ]}
+                        />
+                        <View
+                          style={[
+                            styles.dayDot,
+                            { backgroundColor: selected ? readableTextOn(colors.accent) : colors.accent },
+                          ]}
+                        />
+                      </>
+                    ) : null}
+                  </Pressable>
+                );
+              })}
+            </View>
+          </Animated.View>
+        </GestureDetector>
 
         <View style={styles.sectionHeader}>
           <Pressable
@@ -292,10 +322,11 @@ export default function CalendarScreen() {
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },
   container: { flex: 1, paddingHorizontal: 14, paddingTop: 8 },
+  calendarLayer: { width: '100%' },
   header: {
     alignItems: 'center',
     flexDirection: 'row',
-    marginBottom: 14,
+    marginBottom: 8,
   },
   headerIcon: {
     padding: 6,
@@ -306,23 +337,31 @@ const styles = StyleSheet.create({
     fontSize: 18,
     textAlign: 'center',
   },
+  headerSide: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    width: 100, // Balanced width for both sides
+  },
+  headerSideRight: {
+    justifyContent: 'flex-end',
+  },
   modePill: {
     borderRadius: 14,
     borderWidth: 1,
-    marginRight: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    marginRight: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
   },
   modeText: {
     fontFamily: AppFonts.semibold,
-    fontSize: 13,
+    fontSize: 12,
   },
   weekRow: {
     flexDirection: 'row',
-    marginBottom: 10,
+    justifyContent: 'center',
+    marginBottom: 4,
   },
   weekday: {
-    flex: 1,
     fontFamily: AppFonts.semibold,
     fontSize: 12,
     textAlign: 'center',
@@ -330,18 +369,19 @@ const styles = StyleSheet.create({
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginBottom: 18,
+    justifyContent: 'center',
+    marginBottom: 8,
   },
   dayCell: {
     alignItems: 'center',
-    borderRadius: 14,
+    borderRadius: 8,
     position: 'relative',
     justifyContent: 'center',
-    paddingVertical: 6,
+    paddingVertical: 2,
   },
   dayNumber: {
     fontFamily: AppFonts.semibold,
-    fontSize: 18,
+    fontSize: 16,
     textAlign: 'center',
   },
   dayDot: {
@@ -361,7 +401,7 @@ const styles = StyleSheet.create({
   currentDayFill: {
     position: 'absolute',
     inset: 0,
-    borderRadius: 14,
+    borderRadius: 8,
   },
   sectionHeader: {
     alignItems: 'center',

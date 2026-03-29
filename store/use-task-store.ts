@@ -23,6 +23,7 @@ type TaskStore = {
     description?: string;
     date: string;
   }) => void;
+  deleteScheduledTask: (id: string) => void;
   addTask: (input: {
     title: string;
     description?: string;
