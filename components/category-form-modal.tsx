@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
 import { useEffect, useState } from 'react';
 import {
   KeyboardAvoidingView,
@@ -11,6 +12,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import Animated, { FadeIn, FadeOut, SlideInDown } from 'react-native-reanimated';
 
 import { ColorOptionSheet } from '@/components/color-option-sheet';
 import { AppFonts } from '@/constants/fonts';
@@ -34,8 +36,6 @@ export function CategoryFormModal({ visible, onClose, onCreated, onSaved, initia
   const colors = useAppTheme();
   const addCategory = useTaskStore((state) => state.addCategory);
   const updateCategory = useTaskStore((state) => state.updateCategory);
-  const archiveCategory = useTaskStore((state) => state.archiveCategory);
-  const deleteCategory = useTaskStore((state) => state.deleteCategory);
   const accentColor = useTaskStore((state) => state.settings.accentColor);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -81,13 +81,36 @@ export function CategoryFormModal({ visible, onClose, onCreated, onSaved, initia
 
   return (
     <>
-      <Modal animationType="fade" transparent visible={visible} onRequestClose={onClose}>
+      <Modal 
+        animationType="none" 
+        transparent 
+        visible={visible} 
+        onRequestClose={onClose}
+        statusBarTranslucent={true}
+      >
         <View style={styles.overlay}>
-          <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-            <View style={[styles.sheet, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}> 
+          <Animated.View 
+            entering={FadeIn.duration(300)} 
+            exiting={FadeOut.duration(200)}
+            style={StyleSheet.absoluteFill}
+          >
+            <BlurView intensity={25} tint="dark" style={StyleSheet.absoluteFill}>
+              <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+            </BlurView>
+          </Animated.View>
+
+          <KeyboardAvoidingView 
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            style={styles.modalWrapper}>
+            <Animated.View 
+              entering={SlideInDown.duration(400)}
+              exiting={FadeOut.duration(200)}
+              style={[styles.sheet, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}
+            > 
               <View style={styles.header}>
-                <Text style={[styles.title, { color: colors.text }]}>{isEditing ? 'Edit Category' : 'New Category'}</Text>
+                <Text style={[styles.title, { color: colors.text }]}>
+                  {isEditing ? 'Edit Category' : 'New Category'}
+                </Text>
                 <Pressable onPress={onClose} style={[styles.closeButton, { backgroundColor: colors.surfaceMuted }]}> 
                   <Ionicons name="close" size={18} color={colors.textSoft} />
                 </Pressable>
@@ -151,36 +174,17 @@ export function CategoryFormModal({ visible, onClose, onCreated, onSaved, initia
               </ScrollView>
 
               <View style={styles.footer}>
-                <View style={styles.footerLeft}>
-                  <Pressable onPress={onClose} style={[styles.secondaryButton, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                    <Text style={[styles.secondaryButtonText, { color: colors.textSoft }]}>Cancel</Text>
-                  </Pressable>
-                  {isEditing && (
-                    <Pressable
-                      onPress={() => {
-                        runListAnimation();
-                        if (initialCategory?.isArchived) {
-                          deleteCategory(initialCategory.id);
-                        } else {
-                          archiveCategory(initialCategory!.id);
-                        }
-                        onClose();
-                      }}
-                      style={[styles.secondaryButton, { backgroundColor: `${colors.danger}15`, borderColor: colors.danger }]}>
-                      <Text style={[styles.secondaryButtonText, { color: colors.danger }]}>
-                        {initialCategory?.isArchived ? 'Delete' : 'Archive'}
-                      </Text>
-                    </Pressable>
-                  )}
-                </View>
+                <Pressable onPress={onClose} style={[styles.secondaryButton, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                  <Text style={[styles.secondaryButtonText, { color: colors.textSoft }]}>Cancel</Text>
+                </Pressable>
                 <Pressable
                   disabled={!trimmedName}
                   onPress={handleSave}
-                  style={[styles.primaryButton, { backgroundColor: selectedColor, flex: 1 }, !trimmedName && styles.disabledButton]}>
+                  style={[styles.primaryButton, { backgroundColor: selectedColor }, !trimmedName && styles.disabledButton]}>
                   <Text style={styles.primaryButtonText}>{isEditing ? 'Update' : 'Save'}</Text>
                 </Pressable>
               </View>
-            </View>
+            </Animated.View>
           </KeyboardAvoidingView>
         </View>
       </Modal>
@@ -199,23 +203,31 @@ export function CategoryFormModal({ visible, onClose, onCreated, onSaved, initia
 
 const styles = StyleSheet.create({
   overlay: {
-    backgroundColor: 'rgba(2, 6, 23, 0.7)',
     flex: 1,
     justifyContent: 'center',
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
+  },
+  modalWrapper: {
+    flex: 1,
+    justifyContent: 'center',
   },
   sheet: {
     borderRadius: 28,
     borderWidth: 1,
+    elevation: 8,
     maxHeight: '88%',
     overflow: 'hidden',
-    padding: 16,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: { height: 10, width: 0 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
   },
   header: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 14,
+    marginBottom: 20,
   },
   title: {
     fontFamily: AppFonts.bold,
@@ -224,44 +236,43 @@ const styles = StyleSheet.create({
   closeButton: {
     alignItems: 'center',
     borderRadius: 14,
-    height: 34,
+    height: 38,
     justifyContent: 'center',
-    width: 34,
+    width: 38,
   },
   form: {
-    gap: 14,
+    gap: 16,
   },
   formField: {
     alignSelf: 'center',
     width: '100%',
-    maxWidth: 480,
   },
   label: {
     fontFamily: AppFonts.semibold,
     fontSize: 14,
     marginBottom: 8,
-    paddingLeft: 4,
   },
   input: {
-    borderRadius: 18,
+    borderRadius: 14,
     borderWidth: 1,
     fontFamily: AppFonts.medium,
     fontSize: 16,
     minHeight: MIN_FIELD_HEIGHT,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
   },
   textArea: {
     minHeight: MIN_FIELD_HEIGHT,
   },
   colorTrigger: {
-    borderRadius: 18,
+    borderRadius: 14,
     borderWidth: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    minHeight: 68,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    minHeight: 80,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    marginTop: 8,
   },
   colorTriggerLeft: {
     flex: 1,
@@ -274,12 +285,12 @@ const styles = StyleSheet.create({
   colorTriggerText: {
     fontFamily: AppFonts.bold,
     fontSize: 16,
-    marginBottom: 10,
+    marginBottom: 12,
   },
   colorPreviewBar: {
     borderRadius: 999,
     height: 8,
-    width: 56,
+    width: 60,
   },
   colorTriggerRight: {
     alignItems: 'center',
@@ -294,20 +305,15 @@ const styles = StyleSheet.create({
   footer: {
     flexDirection: 'row',
     gap: 12,
-    marginTop: 16,
-  },
-  footerLeft: {
-    flex: 2,
-    flexDirection: 'row',
-    gap: 8,
+    marginTop: 24,
   },
   secondaryButton: {
     alignItems: 'center',
-    borderRadius: 18,
+    borderRadius: 14,
     borderWidth: 1,
     flex: 1,
     justifyContent: 'center',
-    paddingVertical: 14,
+    paddingVertical: 16,
   },
   secondaryButtonText: {
     fontFamily: AppFonts.semibold,
@@ -315,10 +321,10 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     alignItems: 'center',
-    borderRadius: 18,
+    borderRadius: 14,
     flex: 1,
     justifyContent: 'center',
-    paddingVertical: 14,
+    paddingVertical: 16,
   },
   disabledButton: {
     opacity: 0.45,

@@ -138,12 +138,12 @@ const styles = StyleSheet.create({
   categoryHeader: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
   newCategoryText: { fontFamily: AppFonts.semibold, fontSize: 13 },
   categoryList: { gap: 8, paddingRight: 8 },
-  categoryChip: { borderRadius: 999, paddingHorizontal: 12, paddingVertical: 8 },
+  categoryChip: { borderRadius: 14, paddingHorizontal: 12, paddingVertical: 8 },
   categoryChipText: { color: '#F8FAFC', fontFamily: AppFonts.semibold, fontSize: 13 },
   footer: { flexDirection: 'row', gap: 12, marginTop: 'auto', paddingTop: 20 },
   secondaryButton: {
     alignItems: 'center',
-    borderRadius: 18,
+    borderRadius: 14,
     borderWidth: 1,
     flex: 1,
     justifyContent: 'center',
@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
   secondaryButtonText: { fontFamily: AppFonts.semibold, fontSize: 15 },
   primaryButton: {
     alignItems: 'center',
-    borderRadius: 18,
+    borderRadius: 14,
     flex: 1,
     justifyContent: 'center',
     paddingVertical: 14,

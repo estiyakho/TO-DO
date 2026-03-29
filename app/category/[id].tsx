@@ -90,23 +90,6 @@ export default function CategoryDetailsScreen() {
 
           <View style={styles.headerActions}>
             <Pressable
-              onPress={() => {
-                runListAnimation();
-                if (category.isArchived) {
-                  unarchiveCategory(category.id);
-                } else {
-                  archiveCategory(category.id);
-                  router.back();
-                }
-              }}
-              style={[styles.archiveButton, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}> 
-              <Ionicons name={category.isArchived ? "refresh-outline" : "archive-outline"} size={16} color={colors.text} />
-              <Text style={[styles.editButtonText, { color: colors.text }]}>
-                {category.isArchived ? 'Restore' : 'Archive'}
-              </Text>
-            </Pressable>
-
-            <Pressable
               onPress={() => setEditModalVisible(true)}
               style={[styles.editButton, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}> 
               <Ionicons name="create-outline" size={16} color={colors.text} />
@@ -116,13 +99,17 @@ export default function CategoryDetailsScreen() {
         </View>
 
         <View style={[styles.heroCard, { backgroundColor: `${category.color}16`, borderColor: `${category.color}40` }]}> 
-          <View style={[styles.heroIcon, { backgroundColor: category.color }]}>
-            <Ionicons name="folder-open-outline" size={22} color="#F8FAFC" />
+          <View style={styles.heroHeader}>
+            <View style={[styles.heroIcon, { backgroundColor: category.color }]}>
+              <Ionicons name="folder-open-outline" size={18} color="#F8FAFC" />
+            </View>
+            <View style={styles.heroTextWrap}>
+              <Text style={[styles.heroTitle, { color: colors.text }]}>{category.name}</Text>
+              <Text numberOfLines={2} style={[styles.heroSubtitle, { color: colors.textMuted }]}>
+                {category.description || 'All tasks saved in this category.'}
+              </Text>
+            </View>
           </View>
-          <Text style={[styles.heroTitle, { color: colors.text }]}>{category.name}</Text>
-          <Text style={[styles.heroSubtitle, { color: colors.textMuted }]}>
-            {category.description || 'All tasks saved in this category appear here.'}
-          </Text>
 
           <View style={styles.statsRow}>
             <View style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.border }]}> 
@@ -208,7 +195,7 @@ const styles = StyleSheet.create({
   },
   iconButton: {
     alignItems: 'center',
-    borderRadius: 16,
+    borderRadius: 14,
     borderWidth: 1,
     height: 42,
     justifyContent: 'center',
@@ -220,7 +207,7 @@ const styles = StyleSheet.create({
   },
   archiveButton: {
     alignItems: 'center',
-    borderRadius: 16,
+    borderRadius: 14,
     borderWidth: 1,
     flexDirection: 'row',
     gap: 8,
@@ -229,7 +216,7 @@ const styles = StyleSheet.create({
   },
   editButton: {
     alignItems: 'center',
-    borderRadius: 16,
+    borderRadius: 14,
     borderWidth: 1,
     flexDirection: 'row',
     gap: 8,
@@ -241,49 +228,56 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   heroCard: {
-    borderRadius: 22,
+    borderRadius: 14,
     borderWidth: 1,
     marginBottom: 12,
-    padding: 14,
+    padding: 12,
+  },
+  heroHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 12,
   },
   heroIcon: {
     alignItems: 'center',
-    borderRadius: 18,
-    height: 46,
+    borderRadius: 12,
+    height: 40,
     justifyContent: 'center',
-    marginBottom: 12,
-    width: 46,
+    width: 40,
+  },
+  heroTextWrap: {
+    flex: 1,
   },
   heroTitle: {
     fontFamily: AppFonts.bold,
-    fontSize: 24,
-    marginBottom: 4,
+    fontSize: 20,
+    marginBottom: 2,
   },
   heroSubtitle: {
     fontFamily: AppFonts.medium,
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 13,
+    lineHeight: 18,
   },
   statsRow: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 16,
     marginTop: 14,
   },
   statCard: {
-    borderRadius: 16,
+    borderRadius: 12,
     borderWidth: 1,
     flex: 1,
-    paddingHorizontal: 10,
-    paddingVertical: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
   },
   statValue: {
     fontFamily: AppFonts.bold,
-    fontSize: 18,
-    marginBottom: 2,
+    fontSize: 16,
+    marginBottom: 0,
   },
   statLabel: {
     fontFamily: AppFonts.medium,
-    fontSize: 12,
+    fontSize: 11,
   },
   filterRow: {
     flexDirection: 'row',
@@ -291,7 +285,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   filterChip: {
-    borderRadius: 999,
+    borderRadius: 14,
     borderWidth: 1,
     paddingHorizontal: 12,
     paddingVertical: 8,

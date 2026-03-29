@@ -208,8 +208,14 @@ export default function CategoriesScreen() {
           )}
           ListEmptyComponent={
             <View style={styles.emptyWrap}>
-              <Text style={[styles.emptyTitle, { color: colors.text }]}>No categories yet</Text>
-              <Text style={[styles.emptyText, { color: colors.textMuted }]}>Add category to organize todos.</Text>
+              <Text style={[styles.emptyTitle, { color: colors.text }]}>
+                {activeTab === 'active' ? 'No categories yet' : 'Archive is empty'}
+              </Text>
+              <Text style={[styles.emptyText, { color: colors.textMuted }]}>
+                {activeTab === 'active' 
+                  ? 'Add category to organize todos.' 
+                  : 'An item not currently needed may be stored here. It can become useful in the future.'}
+              </Text>
             </View>
           }
           showsVerticalScrollIndicator={false}
