@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useRef, useEffect } from 'react';
 import {
+  FlatList,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -11,10 +12,13 @@ import {
   TextInput,
   View,
   useWindowDimensions,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
 } from 'react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import { BlurView } from 'expo-blur';
+import * as Haptics from 'expo-haptics';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
-import Animated, { FadeIn, FadeOut, LinearTransition, runOnJS } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut, LinearTransition, runOnJS, SlideInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { FloatingActionButton } from '@/components/floating-action-button';
@@ -28,49 +32,39 @@ const GRID_COLUMNS = 7;
 const GRID_GAP = 6;
 const CARD_HORIZONTAL_PADDING = 28;
 
-function parseHexColor(value: string) {
-  const hex = value.replace('#', '');
-  if (hex.length !== 6) return null;
-  const bigint = parseInt(hex, 16);
-  return {
-    r: (bigint >> 16) & 255,
-    g: (bigint >> 8) & 255,
-    b: bigint & 255,
-  };
-}
-
 function readableTextOn(color: string) {
-  const rgb = parseHexColor(color);
-  if (!rgb) {
-    return '#F8FAFC';
-  }
-  const luminance = (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b) / 255;
-  return luminance > 0.6 ? '#0F172A' : '#F8FAFC';
+  return '#FFFFFF';
 }
 
 export default function CalendarScreen() {
-  const colors = useAppTheme();
   const { width } = useWindowDimensions();
+  const colors = useAppTheme();
   const scheduledTasks = useTaskStore((state) => state.scheduledTasks);
-  const addScheduledTask = useTaskStore((state) => state.addScheduledTask);
   const deleteScheduledTask = useTaskStore((state) => state.deleteScheduledTask);
+  const addScheduledTask = useTaskStore((state) => state.addScheduledTask);
   const settings = useTaskStore((state) => state.settings);
 
-  const [currentMonth, setCurrentMonth] = useState(() => new Date());
+  const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState(() => toDayKey(new Date()));
   const [showAll, setShowAll] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [time, setTime] = useState(new Date());
-  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [useTime, setUseTime] = useState(true);
+  const [selectedHour, setSelectedHour] = useState(() => {
+    const h = new Date().getHours();
+    return h === 0 ? 12 : h > 12 ? h - 12 : h;
+  });
+  const [selectedMinute, setSelectedMinute] = useState(Math.floor(new Date().getMinutes() / 5) * 5);
+  const [period, setPeriod] = useState(() => new Date().getHours() >= 12 ? 'PM' : 'AM');
+  const firstDay = settings?.firstDayOfWeek ?? 'sunday';
 
-  const weekdayLabels = useMemo(() => getWeekdayLabels(settings.firstDayOfWeek), [settings.firstDayOfWeek]);
+  const weekdayLabels = useMemo(() => getWeekdayLabels(firstDay), [firstDay]);
   const todayKey = useMemo(() => toDayKey(new Date()), []);
   const monthGrid = useMemo(
-    () => getMonthGrid(currentMonth, settings.firstDayOfWeek),
-    [currentMonth, settings.firstDayOfWeek]
+    () => getMonthGrid(currentMonth, firstDay),
+    [currentMonth, firstDay]
   );
   const displayGrid = useMemo(() => {
     if (!isCollapsed) return monthGrid;
@@ -86,7 +80,7 @@ export default function CalendarScreen() {
   const taskDates = useMemo(() => new Set(scheduledTasks.map((task) => task.date)), [scheduledTasks]);
   const dayTasks = useMemo(() => {
     if (showAll) {
-      return scheduledTasks;
+      return [...scheduledTasks].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     }
     return scheduledTasks.filter((task) => task.date === selectedDay);
   }, [selectedDay, scheduledTasks, showAll]);
@@ -98,11 +92,18 @@ export default function CalendarScreen() {
     const trimmed = title.trim();
     if (!trimmed) return;
 
+    let timeStr = undefined;
+    if (useTime) {
+      let h24 = selectedHour === 12 ? 0 : selectedHour;
+      if (period === 'PM') h24 += 12;
+      timeStr = `${h24.toString().padStart(2, '0')}:${selectedMinute.toString().padStart(2, '0')}:00`;
+    }
+
     addScheduledTask({ 
       title: trimmed, 
       description, 
       date: selectedDay,
-      time: time.toTimeString().split(' ')[0], // HH:mm:ss format
+      time: timeStr,
     });
     setTitle('');
     setDescription('');
@@ -167,8 +168,8 @@ export default function CalendarScreen() {
           <Animated.View 
             key={`${currentMonth.toISOString()}-${isCollapsed}`} 
             layout={LinearTransition.springify().damping(18)}
-            entering={FadeIn.duration(200)} 
-            exiting={FadeOut.duration(150)}
+            entering={FadeIn.duration(300)} 
+            exiting={FadeOut.duration(200)}
             style={styles.calendarLayer}
           >
             <View style={[styles.weekRow, { gap: GRID_GAP }]}>
@@ -295,12 +296,26 @@ export default function CalendarScreen() {
         <FloatingActionButton onPress={() => setShowAddModal(true)} />
       </View>
 
-      <Modal animationType="slide" transparent visible={showAddModal} onRequestClose={() => setShowAddModal(false)}>
-        <Pressable style={styles.modalBackdrop} onPress={() => setShowAddModal(false)} />
+      <Modal animationType="none" transparent visible={showAddModal} onRequestClose={() => setShowAddModal(false)}>
+        <Animated.View 
+          entering={FadeIn.duration(300)} 
+          exiting={FadeOut.duration(200)}
+          style={StyleSheet.absoluteFill}
+        >
+          <Pressable style={styles.modalBackdrop} onPress={() => setShowAddModal(false)}>
+            <BlurView intensity={Platform.OS === 'ios' ? 40 : 25} tint="dark" style={StyleSheet.absoluteFill} />
+          </Pressable>
+        </Animated.View>
+
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           style={styles.modalWrapper}>
-          <View style={[styles.modalCard, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}>
+          <Animated.View 
+            entering={SlideInDown.duration(400)}
+            exiting={FadeOut.duration(200)}
+            style={[styles.modalCard, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}
+          >
+            <View style={[styles.handleBar, { backgroundColor: colors.border }]} />
             <Text style={[styles.modalTitle, { color: colors.text }]}>New reminder</Text>
             <Text style={[styles.modalSubtitle, { color: colors.textMuted }]}>Alert for {selectedDay}</Text>
 
@@ -317,25 +332,106 @@ export default function CalendarScreen() {
             </View>
 
             <View style={styles.formField}>
-              <Text style={[styles.label, { color: colors.textSoft }]}>Scheduled Time</Text>
-              <Pressable
-                onPress={() => setShowTimePicker(true)}
-                style={[styles.modalInput, { backgroundColor: colors.surface, borderColor: colors.border, justifyContent: 'center' }]}>
-                <Text style={{ color: colors.text, fontFamily: AppFonts.medium, fontSize: 16 }}>
-                  {time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </Text>
-              </Pressable>
-              {showTimePicker && (
-                <DateTimePicker
-                  value={time}
-                  mode="time"
-                  is24Hour={true}
-                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                  onChange={(event, selectedDate) => {
-                    setShowTimePicker(Platform.OS === 'ios');
-                    if (selectedDate) setTime(selectedDate);
-                  }}
-                />
+              <View style={styles.labelRow}>
+                <Text style={[styles.label, { color: colors.textSoft }]}>Remind me at</Text>
+                <Pressable 
+                  onPress={() => setUseTime(!useTime)}
+                  style={[styles.toggleBtn, { backgroundColor: useTime ? colors.accent : colors.surfaceMuted }]}>
+                  <Text style={[styles.toggleText, { color: useTime ? '#FFF' : colors.textMuted }]}>
+                    {useTime ? 'ON' : 'OFF'}
+                  </Text>
+                </Pressable>
+              </View>
+              
+              {useTime && (
+                <View style={styles.timePickerContainer}>
+                  <View style={styles.pickerRow}>
+                    {/* Hours column */}
+                    <View style={styles.pickerCol}>
+                      <Text style={[styles.pickerColLabel, { color: colors.textMuted }]}>Hour</Text>
+                      <ScrollView 
+                        showsVerticalScrollIndicator={false}
+                        snapToInterval={44}
+                        decelerationRate="fast"
+                        style={styles.colScroll}
+                      >
+                        {Array.from({ length: 12 }).map((_, i) => (
+                          <Pressable 
+                            key={i + 1} 
+                            onPress={() => {
+                              setSelectedHour(i + 1);
+                              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                            }}
+                            style={[
+                              styles.pickerItem, 
+                              { backgroundColor: selectedHour === i + 1 ? colors.accent : 'transparent' }
+                            ]}
+                          >
+                            <Text style={[styles.pickerItemText, { color: selectedHour === i + 1 ? '#FFF' : colors.text }]}>
+                              {i + 1}
+                            </Text>
+                          </Pressable>
+                        ))}
+                      </ScrollView>
+                    </View>
+
+                    {/* Minutes column */}
+                    <View style={styles.pickerCol}>
+                      <Text style={[styles.pickerColLabel, { color: colors.textMuted }]}>Min</Text>
+                      <ScrollView 
+                        showsVerticalScrollIndicator={false}
+                        snapToInterval={44}
+                        decelerationRate="fast"
+                        style={styles.colScroll}
+                      >
+                        {Array.from({ length: 12 }).map((_, i) => {
+                          const mins = i * 5;
+                          return (
+                            <Pressable 
+                              key={mins} 
+                              onPress={() => {
+                                setSelectedMinute(mins);
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                              }}
+                              style={[
+                                styles.pickerItem, 
+                                { backgroundColor: selectedMinute === mins ? colors.accent : 'transparent' }
+                              ]}
+                            >
+                              <Text style={[styles.pickerItemText, { color: selectedMinute === mins ? '#FFF' : colors.text }]}>
+                                {mins.toString().padStart(2, '0')}
+                              </Text>
+                            </Pressable>
+                          );
+                        })}
+                      </ScrollView>
+                    </View>
+
+                    {/* AM/PM column */}
+                    <View style={styles.pickerCol}>
+                      <Text style={[styles.pickerColLabel, { color: colors.textMuted }]}>AM/PM</Text>
+                      <View style={styles.colScroll}>
+                        {['AM', 'PM'].map((p) => (
+                          <Pressable 
+                            key={p} 
+                            onPress={() => {
+                              setPeriod(p);
+                              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                            }}
+                            style={[
+                              styles.pickerItem, 
+                              { backgroundColor: period === p ? colors.accent : 'transparent' }
+                            ]}
+                          >
+                            <Text style={[styles.pickerItemText, { color: period === p ? '#FFF' : colors.text }]}>
+                              {p}
+                            </Text>
+                          </Pressable>
+                        ))}
+                      </View>
+                    </View>
+                  </View>
+                </View>
               )}
             </View>
 
@@ -371,7 +467,7 @@ export default function CalendarScreen() {
                 <Text style={styles.primaryButtonText}>Save</Text>
               </Pressable>
             </View>
-          </View>
+          </Animated.View>
         </KeyboardAvoidingView>
       </Modal>
     </SafeAreaView>
@@ -539,7 +635,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   modalBackdrop: {
-    backgroundColor: '#0f172a99',
     bottom: 0,
     left: 0,
     position: 'absolute',
@@ -550,70 +645,137 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
     justifyContent: 'flex-end',
-    padding: 14,
+    padding: 16,
+    paddingBottom: Platform.OS === 'ios' ? 40 : 20,
   },
   modalCard: {
-    borderRadius: 20,
+    borderRadius: 32,
     borderWidth: 1,
-    gap: 12,
-    padding: 16,
+    gap: 16,
+    padding: 24,
     width: '100%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 8,
+  },
+  handleBar: {
+    alignSelf: 'center',
+    borderRadius: 2,
+    height: 4,
+    marginBottom: 8,
+    width: 40,
   },
   modalTitle: {
     fontFamily: AppFonts.bold,
-    fontSize: 18,
+    fontSize: 22,
+    textAlign: 'center',
   },
   modalSubtitle: {
     fontFamily: AppFonts.medium,
-    fontSize: 14,
+    fontSize: 15,
+    textAlign: 'center',
+    marginBottom: 8,
   },
   formField: {
-    gap: 8,
+    gap: 10,
   },
   label: {
     fontFamily: AppFonts.semibold,
     fontSize: 14,
   },
   modalInput: {
-    borderRadius: 14,
+    borderRadius: 18,
     borderWidth: 1,
     fontFamily: AppFonts.medium,
     fontSize: 16,
-    minHeight: 52,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
   },
   textArea: {
-    minHeight: 88,
+    minHeight: 100,
+  },
+  labelRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  toggleBtn: {
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+  },
+  toggleText: {
+    fontFamily: AppFonts.bold,
+    fontSize: 12,
+  },
+  timePickerContainer: {
+    alignSelf: 'stretch',
+    marginTop: 8,
+  },
+  pickerRow: {
+    flexDirection: 'row',
+    gap: 12,
+    justifyContent: 'space-between',
+  },
+  pickerCol: {
+    alignItems: 'center',
+    flex: 1,
+    gap: 8,
+  },
+  pickerColLabel: {
+    fontFamily: AppFonts.semibold,
+    fontSize: 11,
+    textTransform: 'uppercase',
+  },
+  colScroll: {
+    backgroundColor: '#00000010',
+    borderRadius: 16,
+    height: 140,
+    width: '100%',
+  },
+  pickerItem: {
+    alignItems: 'center',
+    borderRadius: 12,
+    height: 44,
+    justifyContent: 'center',
+    margin: 4,
+  },
+  pickerItemText: {
+    fontFamily: AppFonts.bold,
+    fontSize: 16,
   },
   modalActions: {
     flexDirection: 'row',
     gap: 12,
-    marginTop: 4,
-  },
-  secondaryButton: {
-    alignItems: 'center',
-    borderRadius: 14,
-    borderWidth: 1,
-    flex: 1,
-    justifyContent: 'center',
-    paddingVertical: 12,
-  },
-  secondaryButtonText: {
-    fontFamily: AppFonts.semibold,
-    fontSize: 15,
+    marginTop: 8,
   },
   primaryButton: {
     alignItems: 'center',
-    borderRadius: 14,
-    flex: 1,
+    borderRadius: 20,
+    flex: 2,
+    height: 56,
     justifyContent: 'center',
-    paddingVertical: 12,
   },
-  primaryButtonDisabled: { opacity: 0.45 },
+  primaryButtonDisabled: {
+    opacity: 0.5,
+  },
   primaryButtonText: {
-    color: '#F8FAFC',
-    fontFamily: AppFonts.semibold,
-    fontSize: 15,
+    color: '#FFF',
+    fontFamily: AppFonts.bold,
+    fontSize: 16,
+  },
+  secondaryButton: {
+    alignItems: 'center',
+    borderRadius: 20,
+    borderWidth: 1,
+    flex: 1,
+    height: 56,
+    justifyContent: 'center',
+  },
+  secondaryButtonText: {
+    fontFamily: AppFonts.bold,
+    fontSize: 16,
   },
 });
