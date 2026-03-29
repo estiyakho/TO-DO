@@ -7,6 +7,7 @@ import { SettingsOptionSheet } from "@/components/settings-option-sheet";
 import { AppFonts } from "@/constants/fonts";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useTaskStore } from "@/store/use-task-store";
+import { getMonthGrid, getWeekdayLabels } from "@/utils/calendar";
 
 function StatBox({
   icon,
@@ -257,7 +258,7 @@ export default function StatisticsScreen() {
     for (let i = daysCount - 1; i >= 0; i--) {
       const d = new Date(now);
       d.setDate(now.getDate() - i);
-      const dateStr = d.toISOString().split("T")[0];
+      const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
       const count = taskHistory.filter(
         (h) => h.title === currentSelectedTaskTitle && h.date === dateStr
       ).length;
@@ -272,7 +273,28 @@ export default function StatisticsScreen() {
     return data;
   }, [currentSelectedTaskTitle, historyViewMode, taskHistory]);
 
-  const maxHistoryCount = Math.max(...historyChartData.map((d) => d.count)) || 1;
+  const maxHistoryCount = Math.max(...historyChartData.map((d: any) => d.count)) || 1;
+
+  const snapshotData = useMemo(() => {
+    if (!currentSelectedTaskTitle) return [];
+    
+    const now = new Date();
+    const grid = getMonthGrid(now, firstDayOfWeek);
+    
+    return grid.map((cell: any) => {
+       const d = cell.date;
+       const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+       const count = taskHistory.filter(
+         (h) => h.title === currentSelectedTaskTitle && h.date === dateStr
+       ).length;
+       
+       return { 
+         date: dateStr, 
+         count, 
+         isCurrentMonth: cell.inCurrentMonth 
+       };
+    });
+  }, [currentSelectedTaskTitle, taskHistory, firstDayOfWeek]);
 
   return (
     <View
@@ -323,7 +345,7 @@ export default function StatisticsScreen() {
             {currentSelectedTaskTitle ? (
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalChart}>
                 <View style={[styles.chartArea, { minWidth: historyViewMode === "weekly" ? '100.1%' : 800, height: 120, alignItems: 'flex-end' }]}>
-                  {historyChartData.map((item) => (
+                  {historyChartData.map((item: any) => (
                     <View key={item.date} style={[styles.barWrap, { minWidth: historyViewMode === "weekly" ? 44 : 32 }]}>
                       <View style={[styles.barTrack, { backgroundColor: colors.surfaceMuted, height: 60, width: 18 }]}>
                         <View
@@ -351,6 +373,49 @@ export default function StatisticsScreen() {
                 <Text style={{ color: colors.textMuted, fontFamily: AppFonts.medium }}>No Task Selected</Text>
               </View>
             )}
+          </View>
+        </View>
+
+        <View style={[styles.chartCard, { backgroundColor: colors.surfaceElevated, borderColor: colors.border, marginBottom: 20 }]}>
+          <View style={styles.historyHeader}>
+            <Text style={[styles.chartTitle, { color: colors.text, marginBottom: 0 }]}>Snap Shot</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 12, fontFamily: AppFonts.medium }}>
+              {new Date().toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}
+            </Text>
+          </View>
+          
+          <View style={[styles.snapshotGridWrapper, { marginTop: 16 }]}>
+            <View style={styles.snapshotDayLabels}>
+              {getWeekdayLabels(firstDayOfWeek).map((day: string, idx: number) => (
+                <Text key={idx} style={[styles.snapshotDayText, { color: colors.textSoft }]}>
+                  {day.charAt(0)}
+                </Text>
+              ))}
+            </View>
+            <View style={styles.snapshotGrid}>
+              {snapshotData.map((item: any) => {
+                let opacity = 0.03; // Out of month
+                if (item.isCurrentMonth) {
+                  opacity = item.count > 0 ? (item.count === 1 ? 0.4 : 1) : 0.1;
+                } else if (item.count > 0) {
+                  // Even if out of month, show color but ghosted
+                  opacity = 0.15;
+                }
+
+                return (
+                  <View 
+                    key={item.date} 
+                    style={[
+                      styles.snapshotBlock, 
+                      { 
+                        backgroundColor: item.count > 0 ? accent : colors.textMuted,
+                        opacity 
+                      }
+                    ]} 
+                  />
+                );
+              })}
+            </View>
           </View>
         </View>
 
@@ -618,6 +683,40 @@ const styles = StyleSheet.create({
   },
   horizontalChart: {
     marginTop: 8,
+  },
+  snapshotGridWrapper: {
+    paddingHorizontal: 4,
+  },
+  snapshotDayLabels: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+    paddingHorizontal: 2,
+  },
+  snapshotDayText: {
+    fontFamily: AppFonts.bold,
+    fontSize: 10,
+    width: 32,
+    textAlign: 'center',
+  },
+  snapshotGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    justifyContent: 'space-between',
+  },
+  snapshotBlock: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+  },
+  snapshotFooter: {
+    marginTop: 14,
+    alignItems: 'center',
+  },
+  snapshotFooterText: {
+    fontFamily: AppFonts.medium,
+    fontSize: 11,
   },
   rowTwo: {
     flexDirection: "row",
