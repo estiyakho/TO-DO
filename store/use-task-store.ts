@@ -13,6 +13,7 @@ type TaskStore = {
   categories: Category[];
   settings: Settings;
   addScheduledTask: (input: { title: string; description?: string; date: string }) => void;
+  deleteScheduledTask: (id: string) => void;
   addTask: (input: { title: string; description?: string; categoryId?: string; createdAt?: string }) => void;
   toggleTaskStatus: (id: string) => void;
   deleteTask: (id: string) => void;
@@ -45,6 +46,32 @@ export const useTaskStore = create<TaskStore>()(
       categories: DEFAULT_CATEGORIES,
       settings: DEFAULT_SETTINGS,
       scheduledTasks: [],
+      addScheduledTask: ({ title, description, date }) =>
+        set((state) => {
+          const trimmedTitle = title.trim();
+          if (!trimmedTitle) {
+            return state;
+          }
+
+          return {
+            ...state,
+            scheduledTasks: [
+              {
+                id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+                title: trimmedTitle,
+                description: description?.trim() || undefined,
+                date,
+                createdAt: new Date().toISOString(),
+              },
+              ...state.scheduledTasks,
+            ],
+          };
+        }),
+      deleteScheduledTask: (id) =>
+        set((state) => ({
+          ...state,
+          scheduledTasks: state.scheduledTasks.filter((task) => task.id !== id),
+        })),
       addTask: ({ title, description, categoryId, createdAt }) =>
         set((state) => ({
           tasks: [
@@ -206,7 +233,7 @@ export const useTaskStore = create<TaskStore>()(
       migrate: (persistedState) => {
         const state = persistedState as Partial<{
           tasks: Task[];
-  scheduledTasks: ScheduledTask[];
+          scheduledTasks: ScheduledTask[];
           categories: Category[];
           settings: Partial<Settings> & {
             dynamicColors?: boolean;
@@ -240,11 +267,3 @@ export const useTaskStore = create<TaskStore>()(
     }
   )
 );
-
-
-
-
-
-
-
-
