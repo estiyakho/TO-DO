@@ -13,7 +13,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
-import Animated, { FadeIn, FadeOut, runOnJS } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut, LinearTransition, runOnJS } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { FloatingActionButton } from '@/components/floating-action-button';
@@ -59,6 +59,7 @@ export default function CalendarScreen() {
   const [selectedDay, setSelectedDay] = useState(() => toDayKey(new Date()));
   const [showAll, setShowAll] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
 
@@ -68,6 +69,17 @@ export default function CalendarScreen() {
     () => getMonthGrid(currentMonth, settings.firstDayOfWeek),
     [currentMonth, settings.firstDayOfWeek]
   );
+  const displayGrid = useMemo(() => {
+    if (!isCollapsed) return monthGrid;
+
+    const selectedIndex = monthGrid.findIndex((cell) => cell.key === selectedDay);
+    if (selectedIndex === -1) return monthGrid.slice(0, 14);
+
+    const startWeekIndex = Math.floor(selectedIndex / 7);
+    const startIdx = Math.min(startWeekIndex * 7, 28);
+    return monthGrid.slice(startIdx, startIdx + 14);
+  }, [monthGrid, isCollapsed, selectedDay]);
+
   const taskDates = useMemo(() => new Set(scheduledTasks.map((task) => task.date)), [scheduledTasks]);
   const dayTasks = useMemo(() => {
     if (showAll) {
@@ -94,11 +106,23 @@ export default function CalendarScreen() {
 
   const swipeGesture = Gesture.Pan()
     .activeOffsetX([-20, 20])
+    .activeOffsetY([-20, 20])
     .onEnd((e) => {
-      if (e.translationX < -50) {
-        runOnJS(goToNextMonth)();
-      } else if (e.translationX > 50) {
-        runOnJS(goToPrevMonth)();
+      // Horizontal swipe (Month nav)
+      if (Math.abs(e.translationX) > Math.abs(e.translationY)) {
+        if (e.translationX < -50) {
+          runOnJS(goToNextMonth)();
+        } else if (e.translationX > 50) {
+          runOnJS(goToPrevMonth)();
+        }
+      } 
+      // Vertical swipe (Collapse/Expand)
+      else {
+        if (e.translationY < -50) {
+          runOnJS(setIsCollapsed)(true);
+        } else if (e.translationY > 50) {
+          runOnJS(setIsCollapsed)(false);
+        }
       }
     });
 
@@ -117,9 +141,12 @@ export default function CalendarScreen() {
           <Text style={[styles.monthTitle, { color: colors.text }]}>{formatMonthLabel(currentMonth)}</Text>
           
           <View style={[styles.headerSide, styles.headerSideRight]}>
-            <View style={[styles.modePill, { backgroundColor: colors.surfaceMuted, borderColor: colors.border }]}> 
-              <Text style={[styles.modeText, { color: colors.textMuted }]}>Month</Text>
-            </View>
+            <Pressable 
+              onPress={() => setIsCollapsed(!isCollapsed)}
+              style={[styles.modePill, { backgroundColor: colors.surfaceMuted, borderColor: colors.border }]}> 
+              <Text style={[styles.modeText, { color: colors.textMuted }]}>{isCollapsed ? '2 Weeks' : 'Month'}</Text>
+              <Ionicons name={isCollapsed ? 'chevron-down' : 'chevron-up'} size={12} color={colors.textMuted} style={{ marginLeft: 4 }} />
+            </Pressable>
             <Pressable
               onPress={goToNextMonth}
               style={styles.headerIcon}>
@@ -130,9 +157,10 @@ export default function CalendarScreen() {
 
         <GestureDetector gesture={swipeGesture}>
           <Animated.View 
-            key={currentMonth.toISOString()} 
-            entering={FadeIn.duration(300)} 
-            exiting={FadeOut.duration(200)}
+            key={`${currentMonth.toISOString()}-${isCollapsed}`} 
+            layout={LinearTransition.springify().damping(18)}
+            entering={FadeIn.duration(200)} 
+            exiting={FadeOut.duration(150)}
             style={styles.calendarLayer}
           >
             <View style={[styles.weekRow, { gap: GRID_GAP }]}>
@@ -144,7 +172,7 @@ export default function CalendarScreen() {
             </View>
 
             <View style={[styles.grid, { gap: GRID_GAP }]}> 
-              {monthGrid.map((cell) => {
+              {displayGrid.map((cell) => {
                 const selected = cell.key === selectedDay;
                 const hasTasks = taskDates.has(cell.key);
                 const isToday = cell.key === todayKey;
@@ -346,10 +374,12 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modePill: {
+    alignItems: 'center',
     borderRadius: 14,
     borderWidth: 1,
+    flexDirection: 'row',
     marginRight: 4,
-    paddingHorizontal: 10,
+    paddingHorizontal: 8,
     paddingVertical: 5,
   },
   modeText: {
