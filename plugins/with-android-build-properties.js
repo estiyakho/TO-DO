@@ -22,8 +22,8 @@ module.exports = function withAndroidBuildProperties(config) {
     const properties = config.modResults;
 
     setGradleProperty(properties, 'android.minSdkVersion', 24);
-    setGradleProperty(properties, 'android.targetSdkVersion', 36);
-    setGradleProperty(properties, 'android.compileSdkVersion', 36);
+    setGradleProperty(properties, 'android.targetSdkVersion', 35);
+    setGradleProperty(properties, 'android.compileSdkVersion', 35);
 
     config.modResults = properties;
     return config;
