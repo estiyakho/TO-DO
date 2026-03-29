@@ -9,6 +9,7 @@ import { FloatingActionButton } from '@/components/floating-action-button';
 import { AppFonts } from '@/constants/fonts';
 import { useAppTheme } from '@/hooks/use-app-theme';
 import { useTaskStore } from '@/store/use-task-store';
+import { runListAnimation } from '@/utils/layout-animation';
 
 function ProgressRing({ progress, color, labelColor, baseColor }: { progress: number; color: string; labelColor: string; baseColor: string }) {
   const segmentCount = 32;
@@ -60,7 +61,6 @@ export default function CategoriesScreen() {
       const completed = relatedTasks.filter((task) => task.status === 'done').length;
       const remaining = relatedTasks.length - completed;
       const progress = relatedTasks.length ? Math.round((completed / relatedTasks.length) * 100) : 0;
-      const archived = relatedTasks.length > 0 && remaining === 0;
 
       return {
         ...category,
@@ -68,7 +68,6 @@ export default function CategoriesScreen() {
         completed,
         remaining,
         progress,
-        archived,
       };
     });
   }, [categories, tasks]);
@@ -77,7 +76,7 @@ export default function CategoriesScreen() {
     const normalizedQuery = query.trim().toLowerCase();
 
     return categorySummaries.filter((category) => {
-      const matchesTab = activeTab === 'active' ? !category.archived : category.archived;
+      const matchesTab = activeTab === 'active' ? !category.isArchived : category.isArchived;
       const matchesQuery =
         !normalizedQuery ||
         category.name.toLowerCase().includes(normalizedQuery) ||
@@ -90,6 +89,25 @@ export default function CategoriesScreen() {
   const completedTasks = tasks.filter((task) => task.status === 'done').length;
   const remainingTasks = totalTasks - completedTasks;
   const overallProgress = totalTasks ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+  const archiveCategory = useTaskStore((state) => state.archiveCategory);
+  const unarchiveCategory = useTaskStore((state) => state.unarchiveCategory);
+  const deleteCategory = useTaskStore((state) => state.deleteCategory);
+
+  const handleArchive = (id: string) => {
+    runListAnimation();
+    archiveCategory(id);
+  };
+
+  const handleUnarchive = (id: string) => {
+    runListAnimation();
+    unarchiveCategory(id);
+  };
+
+  const handleDelete = (id: string) => {
+    runListAnimation();
+    deleteCategory(id);
+  };
 
   return (
     <SafeAreaView edges={['top']} style={[styles.safeArea, { backgroundColor: colors.background }]}> 
@@ -165,8 +183,26 @@ export default function CategoriesScreen() {
                   </Text>
                 </View>
               </View>
-              <View style={[styles.countPill, { backgroundColor: colors.surfaceMuted }]}> 
-                <Text style={[styles.countText, { color: colors.text }]}>{item.completed}/{item.total}</Text>
+
+              <View style={styles.actionArea}>
+                <View style={[styles.countPill, { backgroundColor: colors.surfaceMuted }]}> 
+                  <Text style={[styles.countText, { color: colors.text }]}>{item.completed}/{item.total}</Text>
+                </View>
+                
+                {activeTab === 'active' ? (
+                  <Pressable onPress={() => handleArchive(item.id)} style={[styles.actionIconPill, { backgroundColor: colors.surfaceMuted }]}>
+                    <Ionicons name="archive-outline" size={18} color={colors.textSoft} />
+                  </Pressable>
+                ) : (
+                  <View style={styles.archivedActions}>
+                    <Pressable onPress={() => handleUnarchive(item.id)} style={[styles.actionIconPill, { backgroundColor: colors.surfaceMuted }]}>
+                      <Ionicons name="refresh-outline" size={18} color={colors.textSoft} />
+                    </Pressable>
+                    <Pressable onPress={() => handleDelete(item.id)} style={[styles.actionIconPill, { backgroundColor: `${colors.danger}20` }]}>
+                      <Ionicons name="trash-outline" size={18} color={colors.danger} />
+                    </Pressable>
+                  </View>
+                )}
               </View>
             </Pressable>
           )}
@@ -382,5 +418,21 @@ const styles = StyleSheet.create({
     fontFamily: AppFonts.medium,
     fontSize: 14,
     textAlign: 'center',
+  },
+  actionArea: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
+  },
+  actionIconPill: {
+    alignItems: 'center',
+    borderRadius: 12,
+    height: 38,
+    justifyContent: 'center',
+    width: 38,
+  },
+  archivedActions: {
+    flexDirection: 'row',
+    gap: 8,
   },
 });

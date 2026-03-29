@@ -22,6 +22,7 @@ export type Category = {
   description?: string;
   color: string;
   icon: string;
+  isArchived: boolean;
   createdAt: string;
 };
 

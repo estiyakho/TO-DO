@@ -23,6 +23,8 @@ export default function CategoryDetailsScreen() {
   const tasks = useTaskStore((state) => state.tasks);
   const toggleTaskStatus = useTaskStore((state) => state.toggleTaskStatus);
   const deleteTask = useTaskStore((state) => state.deleteTask);
+  const archiveCategory = useTaskStore((state) => state.archiveCategory);
+  const unarchiveCategory = useTaskStore((state) => state.unarchiveCategory);
   const timeFormat = useTaskStore((state) => state.settings.timeFormat);
 
   const [editModalVisible, setEditModalVisible] = useState(false);
@@ -86,12 +88,31 @@ export default function CategoryDetailsScreen() {
             <Ionicons name="chevron-back" size={18} color={colors.text} />
           </Pressable>
 
-          <Pressable
-            onPress={() => setEditModalVisible(true)}
-            style={[styles.editButton, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}> 
-            <Ionicons name="create-outline" size={16} color={colors.text} />
-            <Text style={[styles.editButtonText, { color: colors.text }]}>Edit</Text>
-          </Pressable>
+          <View style={styles.headerActions}>
+            <Pressable
+              onPress={() => {
+                runListAnimation();
+                if (category.isArchived) {
+                  unarchiveCategory(category.id);
+                } else {
+                  archiveCategory(category.id);
+                  router.back();
+                }
+              }}
+              style={[styles.archiveButton, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}> 
+              <Ionicons name={category.isArchived ? "refresh-outline" : "archive-outline"} size={16} color={colors.text} />
+              <Text style={[styles.editButtonText, { color: colors.text }]}>
+                {category.isArchived ? 'Restore' : 'Archive'}
+              </Text>
+            </Pressable>
+
+            <Pressable
+              onPress={() => setEditModalVisible(true)}
+              style={[styles.editButton, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}> 
+              <Ionicons name="create-outline" size={16} color={colors.text} />
+              <Text style={[styles.editButtonText, { color: colors.text }]}>Edit</Text>
+            </Pressable>
+          </View>
         </View>
 
         <View style={[styles.heroCard, { backgroundColor: `${category.color}16`, borderColor: `${category.color}40` }]}> 
@@ -192,6 +213,19 @@ const styles = StyleSheet.create({
     height: 42,
     justifyContent: 'center',
     width: 42,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  archiveButton: {
+    alignItems: 'center',
+    borderRadius: 16,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
   },
   editButton: {
     alignItems: 'center',

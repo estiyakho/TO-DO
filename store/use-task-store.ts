@@ -42,6 +42,9 @@ type TaskStore = {
     description?: string;
     color?: string;
   }) => string | null;
+  archiveCategory: (id: string) => void;
+  unarchiveCategory: (id: string) => void;
+  deleteCategory: (id: string) => void;
   resetData: () => void;
   resetStats: () => void;
   resetSettings: () => void;
@@ -158,6 +161,7 @@ export const useTaskStore = create<TaskStore>()(
           description: trimmedDescription,
           color: color ?? CATEGORY_COLORS[nextIndex % CATEGORY_COLORS.length],
           icon: CATEGORY_ICONS[nextIndex % CATEGORY_ICONS.length],
+          isArchived: false,
           createdAt: new Date().toISOString(),
         };
 
@@ -199,6 +203,23 @@ export const useTaskStore = create<TaskStore>()(
 
         return id;
       },
+      archiveCategory: (id: string) =>
+        set((state) => ({
+          categories: state.categories.map((category) =>
+            category.id === id ? { ...category, isArchived: true } : category,
+          ),
+        })),
+      unarchiveCategory: (id: string) =>
+        set((state) => ({
+          categories: state.categories.map((category) =>
+            category.id === id ? { ...category, isArchived: false } : category,
+          ),
+        })),
+      deleteCategory: (id: string) =>
+        set((state) => ({
+          categories: state.categories.filter((category) => category.id !== id),
+          tasks: state.tasks.filter((task) => task.categoryId !== id),
+        })),
       resetData: () =>
         set((state) => ({
           tasks: [],
@@ -286,6 +307,7 @@ export const useTaskStore = create<TaskStore>()(
             (category) => ({
               ...category,
               description: category.description ?? undefined,
+              isArchived: (category as any).isArchived ?? false,
             }),
           ),
           settings: {

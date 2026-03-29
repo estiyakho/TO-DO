@@ -34,6 +34,8 @@ export function CategoryFormModal({ visible, onClose, onCreated, onSaved, initia
   const colors = useAppTheme();
   const addCategory = useTaskStore((state) => state.addCategory);
   const updateCategory = useTaskStore((state) => state.updateCategory);
+  const archiveCategory = useTaskStore((state) => state.archiveCategory);
+  const deleteCategory = useTaskStore((state) => state.deleteCategory);
   const accentColor = useTaskStore((state) => state.settings.accentColor);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -149,14 +151,33 @@ export function CategoryFormModal({ visible, onClose, onCreated, onSaved, initia
               </ScrollView>
 
               <View style={styles.footer}>
-                <Pressable onPress={onClose} style={[styles.secondaryButton, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                  <Text style={[styles.secondaryButtonText, { color: colors.textSoft }]}>Cancel</Text>
-                </Pressable>
+                <View style={styles.footerLeft}>
+                  <Pressable onPress={onClose} style={[styles.secondaryButton, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                    <Text style={[styles.secondaryButtonText, { color: colors.textSoft }]}>Cancel</Text>
+                  </Pressable>
+                  {isEditing && (
+                    <Pressable
+                      onPress={() => {
+                        runListAnimation();
+                        if (initialCategory?.isArchived) {
+                          deleteCategory(initialCategory.id);
+                        } else {
+                          archiveCategory(initialCategory!.id);
+                        }
+                        onClose();
+                      }}
+                      style={[styles.secondaryButton, { backgroundColor: `${colors.danger}15`, borderColor: colors.danger }]}>
+                      <Text style={[styles.secondaryButtonText, { color: colors.danger }]}>
+                        {initialCategory?.isArchived ? 'Delete' : 'Archive'}
+                      </Text>
+                    </Pressable>
+                  )}
+                </View>
                 <Pressable
                   disabled={!trimmedName}
                   onPress={handleSave}
-                  style={[styles.primaryButton, { backgroundColor: selectedColor }, !trimmedName && styles.disabledButton]}>
-                  <Text style={styles.primaryButtonText}>{isEditing ? 'Update Category' : 'Save Category'}</Text>
+                  style={[styles.primaryButton, { backgroundColor: selectedColor, flex: 1 }, !trimmedName && styles.disabledButton]}>
+                  <Text style={styles.primaryButtonText}>{isEditing ? 'Update' : 'Save'}</Text>
                 </Pressable>
               </View>
             </View>
@@ -274,6 +295,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
     marginTop: 16,
+  },
+  footerLeft: {
+    flex: 2,
+    flexDirection: 'row',
+    gap: 8,
   },
   secondaryButton: {
     alignItems: 'center',
