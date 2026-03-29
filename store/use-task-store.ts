@@ -11,6 +11,10 @@ import {
 } from "@/types/task";
 import { DEFAULT_CATEGORIES, DEFAULT_SETTINGS } from "@/utils/app-defaults";
 import { shouldResetTasks } from "@/utils/reset";
+import { 
+  scheduleReminderNotification, 
+  cancelNotification 
+} from "@/utils/notifications";
 
 type TaskStore = {
   hydrated: boolean;
@@ -22,7 +26,8 @@ type TaskStore = {
     title: string;
     description?: string;
     date: string;
-  }) => void;
+    time?: string;
+  }) => Promise<void>;
   deleteScheduledTask: (id: string) => void;
   addTask: (input: {
     title: string;
@@ -84,32 +89,54 @@ export const useTaskStore = create<TaskStore>()(
       categories: DEFAULT_CATEGORIES,
       settings: DEFAULT_SETTINGS,
       scheduledTasks: [],
-      addScheduledTask: ({ title, description, date }) =>
-        set((state) => {
-          const trimmedTitle = title.trim();
-          if (!trimmedTitle) {
-            return state;
-          }
+      addScheduledTask: async ({ title, description, date, time }) => {
+        const { settings } = get();
+        const trimmedTitle = title.trim();
+        if (!trimmedTitle) return;
 
-          return {
-            ...state,
-            scheduledTasks: [
-              {
-                id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-                title: trimmedTitle,
-                description: description?.trim() || undefined,
-                date,
-                createdAt: new Date().toISOString(),
-              },
-              ...state.scheduledTasks,
-            ],
-          };
-        }),
-      deleteScheduledTask: (id: string) =>
+        let notificationId: string | undefined;
+        let snoozeId: string | undefined;
+
+        if (time) {
+          const result = await scheduleReminderNotification(
+            trimmedTitle,
+            description || "",
+            date,
+            time,
+            settings.snoozeDuration
+          );
+          notificationId = result.notificationId;
+          snoozeId = result.snoozeId;
+        }
+
+        set((state) => ({
+          ...state,
+          scheduledTasks: [
+            {
+              id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+              title: trimmedTitle,
+              description: description?.trim() || undefined,
+              date,
+              time,
+              notificationId,
+              snoozeId,
+              createdAt: new Date().toISOString(),
+            },
+            ...state.scheduledTasks,
+          ],
+        }));
+      },
+      deleteScheduledTask: (id: string) => {
+        const task = get().scheduledTasks.find((t) => t.id === id);
+        if (task) {
+          cancelNotification(task.notificationId).catch(console.error);
+          cancelNotification(task.snoozeId).catch(console.error);
+        }
         set((state) => ({
           ...state,
           scheduledTasks: state.scheduledTasks.filter((task) => task.id !== id),
-        })),
+        }));
+      },
       addTask: ({ title, description, categoryId, createdAt }) =>
         set((state) => ({
           tasks: [

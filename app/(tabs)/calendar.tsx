@@ -12,6 +12,7 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import Animated, { FadeIn, FadeOut, LinearTransition, runOnJS } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -62,6 +63,8 @@ export default function CalendarScreen() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [time, setTime] = useState(new Date());
+  const [showTimePicker, setShowTimePicker] = useState(false);
 
   const weekdayLabels = useMemo(() => getWeekdayLabels(settings.firstDayOfWeek), [settings.firstDayOfWeek]);
   const todayKey = useMemo(() => toDayKey(new Date()), []);
@@ -95,7 +98,12 @@ export default function CalendarScreen() {
     const trimmed = title.trim();
     if (!trimmed) return;
 
-    addScheduledTask({ title: trimmed, description, date: selectedDay });
+    addScheduledTask({ 
+      title: trimmed, 
+      description, 
+      date: selectedDay,
+      time: time.toTimeString().split(' ')[0], // HH:mm:ss format
+    });
     setTitle('');
     setDescription('');
     setShowAddModal(false);
@@ -248,7 +256,7 @@ export default function CalendarScreen() {
                 styles.allTasksLabel,
                 { color: showAll ? readableTextOn(colors.accent) : colors.text },
               ]}>
-              All tasks
+              All reminders
             </Text>
           </Pressable>
           {dayTasks.length ? (
@@ -276,10 +284,10 @@ export default function CalendarScreen() {
           ) : (
             <View style={styles.emptyBlock}>
               <View style={[styles.emptyIconWrap, { backgroundColor: `${colors.accent}33` }]}>
-                <Ionicons name="calendar-outline" size={34} color={colors.accent} />
+                <Ionicons name="notifications-outline" size={34} color={colors.accent} />
               </View>
-              <Text style={[styles.emptyTitle, { color: colors.text }]}>Add a calendar task</Text>
-              <Text style={[styles.emptyText, { color: colors.textMuted }]}>Tasks created here stay on the calendar only.</Text>
+              <Text style={[styles.emptyTitle, { color: colors.text }]}>Add a reminder</Text>
+              <Text style={[styles.emptyText, { color: colors.textMuted }]}>Reminders stay on the calendar with native alerts.</Text>
             </View>
           )}
         </ScrollView>
@@ -293,19 +301,42 @@ export default function CalendarScreen() {
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           style={styles.modalWrapper}>
           <View style={[styles.modalCard, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}>
-            <Text style={[styles.modalTitle, { color: colors.text }]}>New calendar task</Text>
-            <Text style={[styles.modalSubtitle, { color: colors.textMuted }]}>Saved for {selectedDay}</Text>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>New reminder</Text>
+            <Text style={[styles.modalSubtitle, { color: colors.textMuted }]}>Alert for {selectedDay}</Text>
 
             <View style={styles.formField}>
               <Text style={[styles.label, { color: colors.textSoft }]}>Title</Text>
               <TextInput
                 autoFocus
                 onChangeText={setTitle}
-                placeholder="What do you want to remember?"
+                placeholder="What should I remind you about?"
                 placeholderTextColor="#64748B"
                 style={[styles.modalInput, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.text }]}
                 value={title}
               />
+            </View>
+
+            <View style={styles.formField}>
+              <Text style={[styles.label, { color: colors.textSoft }]}>Scheduled Time</Text>
+              <Pressable
+                onPress={() => setShowTimePicker(true)}
+                style={[styles.modalInput, { backgroundColor: colors.surface, borderColor: colors.border, justifyContent: 'center' }]}>
+                <Text style={{ color: colors.text, fontFamily: AppFonts.medium, fontSize: 16 }}>
+                  {time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </Text>
+              </Pressable>
+              {showTimePicker && (
+                <DateTimePicker
+                  value={time}
+                  mode="time"
+                  is24Hour={true}
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  onChange={(event, selectedDate) => {
+                    setShowTimePicker(Platform.OS === 'ios');
+                    if (selectedDate) setTime(selectedDate);
+                  }}
+                />
+              )}
             </View>
 
             <View style={styles.formField}>

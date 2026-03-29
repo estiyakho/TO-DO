@@ -47,6 +47,7 @@ export type Settings = {
   snoozeDuration: SnoozeDuration;
   defaultScreen: DefaultScreen;
   language: Language;
+  hasCompletedNotificationOnboarding: boolean;
 };
 
 export type ScheduledTask = {
@@ -54,6 +55,9 @@ export type ScheduledTask = {
   title: string;
   description?: string;
   date: string; // ISO date (YYYY-MM-DD)
+  time?: string; // ISO time or HH:mm
+  notificationId?: string;
+  snoozeId?: string;
   createdAt: string;
 };
 

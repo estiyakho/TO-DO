@@ -21,6 +21,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useTaskStore } from '@/store/use-task-store';
 import { getThemeColors } from '@/utils/theme';
 import { applyInconsolataDefaults } from '@/utils/typography';
+import { NotificationOnboardingModal } from '@/components/notification-onboarding-modal';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -59,6 +60,7 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
   const settings = useTaskStore((state) => state.settings);
   const hydrated = useTaskStore((state) => state.hydrated);
+  const updateSettings = useTaskStore((state) => state.updateSettings);
   const resolvedTheme = settings.theme === 'system' ? colorScheme : settings.theme;
   const palette = useMemo(
     () => getThemeColors(settings, resolvedTheme === 'light' ? 'light' : 'dark'),
@@ -126,6 +128,10 @@ export default function RootLayout() {
           />
         </Stack>
         <StatusBar style={resolvedTheme === 'light' ? 'dark' : 'light'} backgroundColor={palette.background} />
+        <NotificationOnboardingModal 
+          visible={!settings.hasCompletedNotificationOnboarding}
+          onComplete={() => updateSettings({ hasCompletedNotificationOnboarding: true })}
+        />
       </AppLayout>
     </ThemeProvider>
   );
