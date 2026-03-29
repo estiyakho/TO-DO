@@ -38,12 +38,14 @@ export default function CalendarScreen() {
   const scheduledTasks = useTaskStore((state) => state.scheduledTasks);
   const deleteScheduledTask = useTaskStore((state) => state.deleteScheduledTask);
   const addScheduledTask = useTaskStore((state) => state.addScheduledTask);
+  const updateScheduledTask = useTaskStore((state) => state.updateScheduledTask);
   const settings = useTaskStore((state) => state.settings);
 
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState(() => toDayKey(new Date()));
   const [showAll, setShowAll] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [editingScheduledTask, setEditingScheduledTask] = useState<any>(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -120,15 +122,51 @@ export default function CalendarScreen() {
       timeStr = `${h24.toString().padStart(2, '0')}:${selectedMinute.toString().padStart(2, '0')}:00`;
     }
 
-    addScheduledTask({
-      title: trimmed,
-      description,
-      date: selectedDay,
-      time: timeStr,
-    });
+    if (editingScheduledTask) {
+      updateScheduledTask(editingScheduledTask.id, {
+        title: trimmed,
+        description,
+        date: selectedDay,
+        time: timeStr,
+      });
+    } else {
+      addScheduledTask({
+        title: trimmed,
+        description,
+        date: selectedDay,
+        time: timeStr,
+      });
+    }
+
+    resetForm();
+    setShowAddModal(false);
+  };
+
+  const resetForm = () => {
     setTitle('');
     setDescription('');
-    setShowAddModal(false);
+    setEditingScheduledTask(null);
+    setUseTime(true);
+  };
+
+  const handleEditReminder = (task: any) => {
+    setEditingScheduledTask(task);
+    setTitle(task.title);
+    setDescription(task.description || '');
+    setSelectedDay(task.date);
+
+    if (task.time) {
+      const [h24, m] = task.time.split(':').map(Number);
+      const ampm = h24 >= 12 ? 'PM' : 'AM';
+      const h12 = h24 === 0 ? 12 : h24 > 12 ? h24 - 12 : h24;
+      setSelectedHour(h12);
+      setSelectedMinute(m);
+      setPeriod(ampm);
+      setUseTime(true);
+    } else {
+      setUseTime(false);
+    }
+    setShowAddModal(true);
   };
 
   const goToNextMonth = () => setCurrentMonth((value) => new Date(value.getFullYear(), value.getMonth() + 1, 1));
@@ -294,9 +332,20 @@ export default function CalendarScreen() {
                 style={[styles.todoCard, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}>
                 <View style={styles.todoHeader}>
                   <Text style={[styles.todoTitle, { color: colors.text }]}>{task.title}</Text>
-                  <Pressable onPress={() => deleteScheduledTask(task.id)} style={styles.deleteButton}>
-                    <Ionicons name="trash-outline" size={18} color={colors.textMuted} />
-                  </Pressable>
+                  <View style={styles.todoActions}>
+                    <Pressable 
+                      onPress={() => handleEditReminder(task)} 
+                      style={[styles.editButton, { backgroundColor: colors.surfaceMuted, borderColor: colors.border }]}
+                    >
+                      <Ionicons name="create-outline" size={16} color={colors.textMuted} />
+                    </Pressable>
+                    <Pressable 
+                      onPress={() => deleteScheduledTask(task.id)} 
+                      style={[styles.deleteButton, { backgroundColor: `${colors.danger}15`, borderColor: `${colors.danger}30` }]}
+                    >
+                      <Ionicons name="trash-outline" size={16} color={colors.danger} />
+                    </Pressable>
+                  </View>
                 </View>
                 {task.description ? (
                   <Text style={[styles.todoDescription, { color: colors.textMuted }]}>{task.description}</Text>
@@ -314,7 +363,7 @@ export default function CalendarScreen() {
           )}
         </ScrollView>
 
-        <FloatingActionButton onPress={() => setShowAddModal(true)} />
+        <FloatingActionButton onPress={() => { resetForm(); setShowAddModal(true); }} />
       </View>
 
       <Modal animationType="none" transparent visible={showAddModal} onRequestClose={() => setShowAddModal(false)}>
@@ -337,8 +386,12 @@ export default function CalendarScreen() {
             style={[styles.modalCard, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}
           >
             <View style={[styles.handleBar, { backgroundColor: colors.border }]} />
-            <Text style={[styles.modalTitle, { color: colors.text }]}>New reminder</Text>
-            <Text style={[styles.modalSubtitle, { color: colors.textMuted }]}>Alert for {selectedDay}</Text>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>
+              {editingScheduledTask ? 'Edit reminder' : 'New reminder'}
+            </Text>
+            <Text style={[styles.modalSubtitle, { color: colors.textMuted }]}>
+              Alert for {editingScheduledTask ? editingScheduledTask.date : selectedDay}
+            </Text>
 
             <ScrollView 
               showsVerticalScrollIndicator={false}
@@ -530,8 +583,7 @@ export default function CalendarScreen() {
               <Pressable
                 onPress={() => {
                   setShowAddModal(false);
-                  setTitle('');
-                  setDescription('');
+                  resetForm();
                 }}
                 style={[styles.secondaryButton, { backgroundColor: colors.surface, borderColor: colors.border }]}>
                 <Text style={[styles.secondaryButtonText, { color: colors.textSoft }]}>Cancel</Text>
@@ -541,7 +593,7 @@ export default function CalendarScreen() {
                 disabled={!title.trim()}
                 onPress={handleSaveTask}
                 style={[styles.primaryButton, { backgroundColor: colors.accent }, !title.trim() && styles.primaryButtonDisabled]}>
-                <Text style={styles.primaryButtonText}>Save</Text>
+                <Text style={styles.primaryButtonText}>{editingScheduledTask ? 'Update' : 'Save'}</Text>
               </Pressable>
             </View>
           </Animated.View>
@@ -686,8 +738,25 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
   },
+  todoActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  editButton: {
+    alignItems: 'center',
+    borderRadius: 10,
+    borderWidth: 1,
+    height: 34,
+    justifyContent: 'center',
+    width: 34,
+  },
   deleteButton: {
-    padding: 6,
+    alignItems: 'center',
+    borderRadius: 10,
+    borderWidth: 1,
+    height: 34,
+    justifyContent: 'center',
+    width: 34,
   },
   emptyBlock: {
     alignItems: 'center',

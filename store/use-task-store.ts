@@ -29,6 +29,12 @@ type TaskStore = {
     time?: string;
   }) => Promise<void>;
   deleteScheduledTask: (id: string) => void;
+  updateScheduledTask: (id: string, input: {
+    title: string;
+    description?: string;
+    date: string;
+    time?: string;
+  }) => Promise<void>;
   addTask: (input: {
     title: string;
     description?: string;
@@ -140,6 +146,50 @@ export const useTaskStore = create<TaskStore>()(
         set((state) => ({
           ...state,
           scheduledTasks: state.scheduledTasks.filter((task) => task.id !== id),
+        }));
+      },
+      updateScheduledTask: async (id, { title, description, date, time }) => {
+        const { settings, scheduledTasks } = get();
+        const trimmedTitle = title.trim();
+        if (!trimmedTitle) return;
+
+        const oldTask = scheduledTasks.find((t) => t.id === id);
+        if (!oldTask) return;
+
+        // Cancel previous notifications
+        cancelNotification(oldTask.notificationId).catch(console.error);
+        cancelNotification(oldTask.snoozeId).catch(console.error);
+
+        let notificationId: string | undefined;
+        let snoozeId: string | undefined;
+
+        if (time) {
+          const result = await scheduleReminderNotification(
+            trimmedTitle,
+            description || "",
+            date,
+            time,
+            settings.snoozeDuration
+          );
+          notificationId = result.notificationId;
+          snoozeId = result.snoozeId;
+        }
+
+        set((state) => ({
+          ...state,
+          scheduledTasks: state.scheduledTasks.map((t) =>
+            t.id === id
+              ? {
+                  ...t,
+                  title: trimmedTitle,
+                  description: description?.trim() || undefined,
+                  date,
+                  time,
+                  notificationId,
+                  snoozeId,
+                }
+              : t
+          ),
         }));
       },
       addTask: ({ title, description, categoryId, createdAt }) =>
