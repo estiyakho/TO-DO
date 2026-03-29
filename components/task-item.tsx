@@ -110,6 +110,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   leftInteraction: {
+    alignItems: 'center',
     flex: 1,
     flexDirection: 'row',
   },
@@ -120,7 +121,6 @@ const styles = StyleSheet.create({
     height: 24,
     justifyContent: 'center',
     marginRight: 12,
-    marginTop: 2,
     width: 24,
   },
   textBlock: {

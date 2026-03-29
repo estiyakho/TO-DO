@@ -286,8 +286,20 @@ export default function TodosScreen() {
           keyboardShouldPersistTaps="handled"
           ListEmptyComponent={
             <EmptyState
-              title="Add a Todo"
-              description="Create a to do to get started."
+              title={
+                activeFilter === "todo" 
+                  ? "Add a Todo" 
+                  : activeFilter === "done" 
+                    ? "Finished Tasks" 
+                    : "Not Available"
+              }
+              description={
+                activeFilter === "todo"
+                  ? "Create a to do to get started."
+                  : activeFilter === "done"
+                    ? "Finished tasks will appear here."
+                    : "Tasks that are not available today are here."
+              }
             />
           }
           removeClippedSubviews
