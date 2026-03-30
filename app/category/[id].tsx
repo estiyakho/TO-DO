@@ -26,6 +26,7 @@ export default function CategoryDetailsScreen() {
   const tasks = useTaskStore((state) => state.tasks);
   const toggleTaskStatus = useTaskStore((state) => state.toggleTaskStatus);
   const deleteTask = useTaskStore((state) => state.deleteTask);
+  const setTaskNotAvailable = useTaskStore((state) => state.setTaskNotAvailable);
   const archiveCategory = useTaskStore((state) => state.archiveCategory);
   const unarchiveCategory = useTaskStore((state) => state.unarchiveCategory);
   const timeFormat = useTaskStore((state) => state.settings.timeFormat);
@@ -67,6 +68,14 @@ export default function CategoryDetailsScreen() {
       toggleTaskStatus(id);
     },
     [toggleTaskStatus]
+  );
+
+  const handleNotAvailable = useCallback(
+    (id: string) => {
+      runListAnimation();
+      setTaskNotAvailable(id);
+    },
+    [setTaskNotAvailable]
   );
 
   if (!category) {
@@ -170,6 +179,7 @@ export default function CategoryDetailsScreen() {
               timeFormat={timeFormat}
               onDelete={handleDelete}
               onToggle={handleToggle}
+              onNotAvailable={handleNotAvailable}
               onEdit={(task) => setEditingTask(task)}
             />
           )}

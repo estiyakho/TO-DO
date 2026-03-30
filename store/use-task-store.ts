@@ -273,7 +273,7 @@ export const useTaskStore = create<TaskStore>()(
       setTaskNotAvailable: (id: string) =>
         set((state) => ({
           tasks: state.tasks.map((task) =>
-            task.id === id ? { ...task, status: "not-available" } : task,
+            task.id === id ? { ...task, status: task.status === "not-available" ? "todo" : "not-available" } : task,
           ),
         })),
       deleteTask: (id: string) =>
