@@ -8,6 +8,7 @@ import { CategoryFormModal } from '@/components/category-form-modal';
 import { TaskFormModal } from '@/components/task-form-modal';
 import { EmptyState } from '@/components/empty-state';
 import { FloatingActionButton } from '@/components/floating-action-button';
+import { SettingsOptionSheet } from '@/components/settings-option-sheet';
 import { TaskItem } from '@/components/task-item';
 import { AppFonts } from '@/constants/fonts';
 import { useAppTheme } from '@/hooks/use-app-theme';
@@ -15,6 +16,14 @@ import { useTaskStore } from '@/store/use-task-store';
 import { Task, TaskStatus } from '@/types/task';
 import { runListAnimation } from '@/utils/layout-animation';
 
+const SORT_OPTIONS = [
+  { label: "Newest First", value: "newest" as const },
+  { label: "Oldest First", value: "oldest" as const },
+  { label: "Title A-Z", value: "title-asc" as const },
+  { label: "Title Z-A", value: "title-desc" as const },
+];
+
+type SortMode = (typeof SORT_OPTIONS)[number]["value"];
 type CategoryTaskFilter = 'all' | TaskStatus;
 
 export default function CategoryDetailsScreen() {
@@ -35,19 +44,35 @@ export default function CategoryDetailsScreen() {
   const [editingTask, setEditingTask] = useState<Task | undefined>(undefined);
   const [isAddingTask, setIsAddingTask] = useState(false);
   const [taskFilter, setTaskFilter] = useState<CategoryTaskFilter>('all');
+  const [sortMode, setSortMode] = useState<SortMode>("newest");
+  const [sortSheetVisible, setSortSheetVisible] = useState(false);
 
   const categoryId = Array.isArray(params.id) ? params.id[0] : params.id;
   const category = categories.find((item) => item.id === categoryId);
 
   const categoryTasks = useMemo(() => {
-    const filtered = tasks.filter((task) => task.categoryId === categoryId);
+    const defaultFiltered = tasks.filter((task) => task.categoryId === categoryId);
+    let result = defaultFiltered;
 
-    if (taskFilter === 'all') {
-      return filtered;
+    if (taskFilter !== 'all') {
+      result = defaultFiltered.filter((task) => task.status === taskFilter);
     }
 
-    return filtered.filter((task) => task.status === taskFilter);
-  }, [categoryId, taskFilter, tasks]);
+    result.sort((left, right) => {
+      if (sortMode === "newest") {
+        return new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime();
+      }
+      if (sortMode === "oldest") {
+        return new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime();
+      }
+      if (sortMode === "title-asc") {
+        return left.title.localeCompare(right.title);
+      }
+      return right.title.localeCompare(left.title);
+    });
+
+    return result;
+  }, [categoryId, taskFilter, sortMode, tasks]);
 
   const availableTasks = tasks.filter((task) => task.categoryId === categoryId && task.status !== 'not-available');
   const totalTasks = availableTasks.length;
@@ -147,6 +172,7 @@ export default function CategoryDetailsScreen() {
             { label: 'All', value: 'all' as const },
             { label: 'Doing', value: 'todo' as const },
             { label: 'Done', value: 'done' as const },
+            { label: 'N/A', value: 'not-available' as const },
           ].map((option) => {
             const active = taskFilter === option.value;
             return (
@@ -164,6 +190,12 @@ export default function CategoryDetailsScreen() {
               </Pressable>
             );
           })}
+          <Pressable
+            style={styles.filterButton}
+            onPress={() => setSortSheetVisible(true)}
+          >
+            <Ionicons name="filter-outline" size={18} color={colors.textMuted} />
+          </Pressable>
         </View>
 
         <FlatList
@@ -203,6 +235,16 @@ export default function CategoryDetailsScreen() {
           setEditingTask(undefined);
           setIsAddingTask(false);
         }}
+      />
+
+      <SettingsOptionSheet
+        visible={sortSheetVisible}
+        title="Sort Todos"
+        iconName="swap-vertical-outline"
+        options={SORT_OPTIONS}
+        selectedValue={sortMode}
+        onClose={() => setSortSheetVisible(false)}
+        onSelect={setSortMode}
       />
     </View>
   );
@@ -321,6 +363,10 @@ const styles = StyleSheet.create({
     color: '#F8FAFC',
     fontFamily: AppFonts.semibold,
     fontSize: 13,
+  },
+  filterButton: {
+    marginLeft: 'auto',
+    padding: 6,
   },
   listContent: {
     flexGrow: 1,
