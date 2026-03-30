@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import Animated, { FadeIn, FadeOut, ZoomIn, ZoomOut } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppFonts } from '@/constants/fonts';
 import { useAppTheme } from '@/hooks/use-app-theme';
@@ -29,8 +30,11 @@ export function ModernConfirmationModal({
   iconName = 'alert-circle-outline',
 }: ModernConfirmationModalProps) {
   const colors = useAppTheme();
+  const insets = useSafeAreaInsets();
+  const { height: windowHeight } = useWindowDimensions();
   
   const accentColor = tone === 'danger' ? colors.danger : colors.accent;
+  const modalMaxHeight = Math.max(240, windowHeight - insets.top - insets.bottom - 48);
   
   const handleConfirm = () => {
     onConfirm();
@@ -42,8 +46,8 @@ export function ModernConfirmationModal({
   };
 
   return (
-    <Modal animationType="none" transparent visible={visible} onRequestClose={onClose}>
-      <View style={styles.overlay}>
+    <Modal animationType="none" transparent visible={visible} onRequestClose={onClose} statusBarTranslucent={true}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.overlay}>
         <Animated.View 
           entering={FadeIn.duration(200)} 
           exiting={FadeOut.duration(200)}
@@ -60,6 +64,7 @@ export function ModernConfirmationModal({
             { 
               backgroundColor: colors.surfaceElevated, 
               borderColor: colors.border,
+              maxHeight: Math.min(modalMaxHeight, windowHeight * 0.82),
             }
           ]}
         >
@@ -102,7 +107,7 @@ export function ModernConfirmationModal({
             </Pressable>
           </View>
         </Animated.View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }

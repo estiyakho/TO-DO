@@ -42,7 +42,6 @@ const SORT_OPTIONS = [
   { label: "Oldest First", value: "oldest" as const },
   { label: "Title A-Z", value: "title-asc" as const },
   { label: "Title Z-A", value: "title-desc" as const },
-  { label: "Manual", value: "manual" as const },
 ];
 
 type SortMode = (typeof SORT_OPTIONS)[number]["value"];
@@ -76,11 +75,6 @@ export default function TodosScreen() {
       if (mode === "newest") return new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime();
       if (mode === "oldest") return new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime();
       if (mode === "title-asc") return left.title.localeCompare(right.title);
-      if (mode === "manual") {
-        const leftOrder = left.orderIndex ?? new Date(left.createdAt).getTime();
-        const rightOrder = right.orderIndex ?? new Date(right.createdAt).getTime();
-        return rightOrder - leftOrder;
-      }
       return right.title.localeCompare(left.title);
     });
     return result;
@@ -89,12 +83,12 @@ export default function TodosScreen() {
   const [activeFilter, setActiveFilter] = useState<TaskStatus>("todo");
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>("all");
   const [query, setQuery] = useState("");
-  const [sortMode, setSortMode] = useState<SortMode>("manual");
+  const [sortMode, setSortMode] = useState<SortMode>("newest");
   const [sortSheetVisible, setSortSheetVisible] = useState(false);
   const [addTaskModalVisible, setAddTaskModalVisible] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | undefined>(undefined);
   
-  const [listData, setListData] = useState<Task[]>(() => getInitialFilteredTasks("todo", "all", "", "manual"));
+  const [listData, setListData] = useState<Task[]>(() => getInitialFilteredTasks("todo", "all", "", "newest"));
   const justDragged = useRef(false);
 
   useLayoutEffect(() => {
@@ -293,7 +287,6 @@ export default function TodosScreen() {
           onDragEnd={({ data }) => {
             justDragged.current = true;
             setListData(data);
-            if (sortMode !== 'manual') setSortMode('manual');
             reorderTasks(data.map(t => t.id));
           }}
           contentContainerStyle={[styles.listContent, { paddingBottom: Math.max(92, insets.bottom + 80) }]}
@@ -329,7 +322,7 @@ export default function TodosScreen() {
         visible={sortSheetVisible}
         title="Sort Todos"
         iconName="swap-vertical-outline"
-        options={SORT_OPTIONS.filter(o => o.value !== 'manual')}
+        options={SORT_OPTIONS}
         selectedValue={sortMode}
         onClose={() => setSortSheetVisible(false)}
         onSelect={setSortMode}

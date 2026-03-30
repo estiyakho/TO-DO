@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useMemo, useState } from 'react';
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppFonts } from '@/constants/fonts';
 import { useAppTheme } from '@/hooks/use-app-theme';
@@ -24,8 +25,11 @@ export function ColorOptionSheet({
   onSelect,
 }: ColorOptionSheetProps) {
   const colors = useAppTheme();
+  const insets = useSafeAreaInsets();
+  const { height: windowHeight } = useWindowDimensions();
   const initialPalette = useMemo(() => findPaletteByColor(selectedValue, palettes), [palettes, selectedValue]);
   const [activePaletteLabel, setActivePaletteLabel] = useState(initialPalette.label);
+  const maxSheetHeight = Math.max(260, windowHeight - insets.top - insets.bottom - 56);
 
   useEffect(() => {
     setActivePaletteLabel(initialPalette.label);
@@ -34,10 +38,18 @@ export function ColorOptionSheet({
   const activePalette = palettes.find((palette) => palette.label === activePaletteLabel) ?? initialPalette;
 
   return (
-    <Modal animationType="fade" transparent visible={visible} onRequestClose={onClose}>
-      <View style={styles.overlay}>
+    <Modal animationType="fade" transparent visible={visible} onRequestClose={onClose} statusBarTranslucent={true}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.overlay}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-        <View style={[styles.sheet, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}> 
+        <View
+          style={[
+            styles.sheet,
+            {
+              backgroundColor: colors.surfaceElevated,
+              borderColor: colors.border,
+              maxHeight: Math.min(maxSheetHeight, windowHeight * 0.82),
+            },
+          ]}>
           <View style={styles.header}>
             <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
             <Pressable onPress={onClose} style={[styles.closeButton, { backgroundColor: colors.surfaceMuted }]}> 
@@ -102,7 +114,7 @@ export function ColorOptionSheet({
             </View>
           </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }

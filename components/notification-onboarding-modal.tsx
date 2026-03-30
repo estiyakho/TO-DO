@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import Animated, { FadeIn, FadeOut, ZoomIn, ZoomOut } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppFonts } from '@/constants/fonts';
 import { useAppTheme } from '@/hooks/use-app-theme';
@@ -14,6 +14,9 @@ type NotificationOnboardingModalProps = {
 
 export function NotificationOnboardingModal({ visible, onComplete }: NotificationOnboardingModalProps) {
   const colors = useAppTheme();
+  const insets = useSafeAreaInsets();
+  const { height: windowHeight } = useWindowDimensions();
+  const maxCardHeight = Math.max(320, windowHeight - insets.top - insets.bottom - 48);
 
   const handleAllow = async () => {
     await requestNotificationPermissions();
@@ -25,8 +28,8 @@ export function NotificationOnboardingModal({ visible, onComplete }: Notificatio
   };
 
   return (
-    <Modal animationType="none" transparent visible={visible}>
-      <View style={styles.container}>
+    <Modal animationType="none" transparent visible={visible} statusBarTranslucent={true}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
         <Animated.View 
           entering={FadeIn.duration(400)} 
           exiting={FadeOut.duration(300)}
@@ -36,46 +39,55 @@ export function NotificationOnboardingModal({ visible, onComplete }: Notificatio
         <Animated.View 
           entering={ZoomIn.duration(200)}
           exiting={ZoomOut.duration(150)}
-          style={[styles.card, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}
+          style={[
+            styles.card,
+            {
+              backgroundColor: colors.surfaceElevated,
+              borderColor: colors.border,
+              maxHeight: Math.min(maxCardHeight, windowHeight * 0.9),
+            },
+          ]}
         >
-          <View style={[styles.iconWrap, { backgroundColor: `${colors.accent}16` }]}>
-            <Ionicons color={colors.accent} name="notifications-outline" size={48} />
-          </View>
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.cardContent}>
+            <View style={[styles.iconWrap, { backgroundColor: `${colors.accent}16` }]}>
+              <Ionicons color={colors.accent} name="notifications-outline" size={48} />
+            </View>
 
-          <Text style={[styles.title, { color: colors.text }]}>Stay on Schedule</Text>
-          <Text style={[styles.description, { color: colors.textSoft }]}>
-            Enable notifications to receive timely reminders for your scheduled tasks and never miss a deadline again.
-          </Text>
+            <Text style={[styles.title, { color: colors.text }]}>Stay on Schedule</Text>
+            <Text style={[styles.description, { color: colors.textSoft }]}>
+              Enable notifications to receive timely reminders for your scheduled tasks and never miss a deadline again.
+            </Text>
 
-          <View style={styles.features}>
-            <Feature icon="alarm-outline" text="Smart Reminders" color={colors.accent} />
-            <Feature icon="refresh-outline" text="Automatic Snooze" color={colors.accent} />
-            <Feature icon="checkmark-done-outline" text="Task Updates" color={colors.accent} />
-          </View>
+            <View style={styles.features}>
+              <Feature icon="alarm-outline" text="Smart Reminders" color={colors.accent} />
+              <Feature icon="refresh-outline" text="Automatic Snooze" color={colors.accent} />
+              <Feature icon="checkmark-done-outline" text="Task Updates" color={colors.accent} />
+            </View>
 
-          <View style={styles.actions}>
-            <Pressable 
-              onPress={handleAllow}
-              style={({ pressed }) => [
-                styles.primaryButton, 
-                { backgroundColor: colors.accent, opacity: pressed ? 0.8 : 1 }
-              ]}
-            >
-              <Text style={styles.primaryButtonText}>Enable Reminders</Text>
-            </Pressable>
-            
-            <Pressable 
-              onPress={handleSkip}
-              style={({ pressed }) => [
-                styles.secondaryButton, 
-                { opacity: pressed ? 0.6 : 1 }
-              ]}
-            >
-              <Text style={[styles.secondaryButtonText, { color: colors.textSoft }]}>Maybe Later</Text>
-            </Pressable>
-          </View>
+            <View style={styles.actions}>
+              <Pressable 
+                onPress={handleAllow}
+                style={({ pressed }) => [
+                  styles.primaryButton, 
+                  { backgroundColor: colors.accent, opacity: pressed ? 0.8 : 1 }
+                ]}
+              >
+                <Text style={styles.primaryButtonText}>Enable Reminders</Text>
+              </Pressable>
+              
+              <Pressable 
+                onPress={handleSkip}
+                style={({ pressed }) => [
+                  styles.secondaryButton, 
+                  { opacity: pressed ? 0.6 : 1 }
+                ]}
+              >
+                <Text style={[styles.secondaryButtonText, { color: colors.textSoft }]}>Maybe Later</Text>
+              </Pressable>
+            </View>
+          </ScrollView>
         </Animated.View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
@@ -103,13 +115,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 32,
     borderWidth: 1,
-    padding: 28,
     width: '100%',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.3,
     shadowRadius: 20,
     elevation: 8,
+  },
+  cardContent: {
+    padding: 28,
   },
   iconWrap: {
     alignItems: 'center',

@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { BlurView } from 'expo-blur';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppFonts } from '@/constants/fonts';
 import { useAppTheme } from '@/hooks/use-app-theme';
@@ -22,6 +23,9 @@ export function CategoryOptionSheet({
   onSelect,
 }: CategoryOptionSheetProps) {
   const colors = useAppTheme();
+  const insets = useSafeAreaInsets();
+  const { height: windowHeight } = useWindowDimensions();
+  const maxSheetHeight = Math.max(260, windowHeight - insets.top - insets.bottom - 56);
 
   return (
     <Modal 
@@ -31,12 +35,20 @@ export function CategoryOptionSheet({
       onRequestClose={onClose}
       statusBarTranslucent={true}
     >
-      <View style={styles.overlay}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.overlay}>
         <BlurView intensity={25} tint="dark" style={StyleSheet.absoluteFill}>
           <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
         </BlurView>
-        
-        <View style={[styles.sheet, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}> 
+
+        <View
+          style={[
+            styles.sheet,
+            {
+              backgroundColor: colors.surfaceElevated,
+              borderColor: colors.border,
+              maxHeight: Math.min(maxSheetHeight, windowHeight * 0.76),
+            },
+          ]}>
           <View style={styles.header}>
             <View style={[styles.iconWrap, { backgroundColor: `${colors.accent}22` }]}>
               <Ionicons color={colors.accent} name="grid-outline" size={22} />
@@ -44,8 +56,7 @@ export function CategoryOptionSheet({
             <Text style={[styles.title, { color: colors.text }]}>Select Category</Text>
           </View>
 
-          <ScrollView bounces={false} showsVerticalScrollIndicator={false}>
-            {/* None Option */}
+          <ScrollView bounces={false} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
             <Pressable
               onPress={() => {
                 onSelect(undefined);
@@ -61,7 +72,6 @@ export function CategoryOptionSheet({
               </View>
             </Pressable>
 
-            {/* Categories */}
             {categories.map((cat) => {
               const selected = cat.id === selectedValue;
               return (
@@ -84,7 +94,7 @@ export function CategoryOptionSheet({
             })}
           </ScrollView>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }

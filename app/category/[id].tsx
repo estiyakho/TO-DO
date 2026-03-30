@@ -1,33 +1,34 @@
-import { Ionicons } from '@expo/vector-icons';
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import DraggableFlatList, { RenderItemParams } from 'react-native-draggable-flatlist';
+import { Ionicons } from "@expo/vector-icons";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import DraggableFlatList, {
+    RenderItemParams,
+} from "react-native-draggable-flatlist";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { CategoryFormModal } from '@/components/category-form-modal';
-import { VerticalScaleDecorator } from '@/components/vertical-scale-decorator';
-import { TaskFormModal } from '@/components/task-form-modal';
-import { EmptyState } from '@/components/empty-state';
-import { FloatingActionButton } from '@/components/floating-action-button';
-import { SettingsOptionSheet } from '@/components/settings-option-sheet';
-import { TaskItem } from '@/components/task-item';
-import { AppFonts } from '@/constants/fonts';
-import { useAppTheme } from '@/hooks/use-app-theme';
-import { useTaskStore } from '@/store/use-task-store';
-import { Task, TaskStatus } from '@/types/task';
-import { runListAnimation } from '@/utils/layout-animation';
+import { CategoryFormModal } from "@/components/category-form-modal";
+import { EmptyState } from "@/components/empty-state";
+import { FloatingActionButton } from "@/components/floating-action-button";
+import { SettingsOptionSheet } from "@/components/settings-option-sheet";
+import { TaskFormModal } from "@/components/task-form-modal";
+import { TaskItem } from "@/components/task-item";
+import { VerticalScaleDecorator } from "@/components/vertical-scale-decorator";
+import { AppFonts } from "@/constants/fonts";
+import { useAppTheme } from "@/hooks/use-app-theme";
+import { useTaskStore } from "@/store/use-task-store";
+import { Task, TaskStatus } from "@/types/task";
+import { runListAnimation } from "@/utils/layout-animation";
 
 const SORT_OPTIONS = [
   { label: "Newest First", value: "newest" as const },
   { label: "Oldest First", value: "oldest" as const },
   { label: "Title A-Z", value: "title-asc" as const },
   { label: "Title Z-A", value: "title-desc" as const },
-  { label: "Manual", value: "manual" as const },
 ];
 
 type SortMode = (typeof SORT_OPTIONS)[number]["value"];
-type CategoryTaskFilter = 'all' | TaskStatus;
+type CategoryTaskFilter = "all" | TaskStatus;
 
 export default function CategoryDetailsScreen() {
   const router = useRouter();
@@ -38,7 +39,9 @@ export default function CategoryDetailsScreen() {
   const tasks = useTaskStore((state) => state.tasks);
   const toggleTaskStatus = useTaskStore((state) => state.toggleTaskStatus);
   const deleteTask = useTaskStore((state) => state.deleteTask);
-  const setTaskNotAvailable = useTaskStore((state) => state.setTaskNotAvailable);
+  const setTaskNotAvailable = useTaskStore(
+    (state) => state.setTaskNotAvailable,
+  );
   const reorderTasks = useTaskStore((state) => state.reorderTasks);
   const archiveCategory = useTaskStore((state) => state.archiveCategory);
   const unarchiveCategory = useTaskStore((state) => state.unarchiveCategory);
@@ -47,36 +50,39 @@ export default function CategoryDetailsScreen() {
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | undefined>(undefined);
   const [isAddingTask, setIsAddingTask] = useState(false);
-  const [taskFilter, setTaskFilter] = useState<CategoryTaskFilter>('all');
-  const [sortMode, setSortMode] = useState<SortMode>("manual");
+  const [taskFilter, setTaskFilter] = useState<CategoryTaskFilter>("all");
+  const [sortMode, setSortMode] = useState<SortMode>("newest");
   const [sortSheetVisible, setSortSheetVisible] = useState(false);
-  
-  const categoryId = Array.isArray(params.id) ? params.id[0] : (params.id || '');
+
+  const categoryId = Array.isArray(params.id) ? params.id[0] : params.id || "";
   const category = categories.find((item) => item.id === categoryId);
 
   const categoryTasks = useMemo(() => {
     if (!categoryId) return [];
-    const defaultFiltered = tasks.filter((task) => task.categoryId === categoryId);
+    const defaultFiltered = tasks.filter(
+      (task) => task.categoryId === categoryId,
+    );
     let result = defaultFiltered;
 
-    if (taskFilter !== 'all') {
+    if (taskFilter !== "all") {
       result = defaultFiltered.filter((task) => task.status === taskFilter);
     }
 
     result.sort((left, right) => {
       if (sortMode === "newest") {
-        return new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime();
+        return (
+          new Date(right.createdAt).getTime() -
+          new Date(left.createdAt).getTime()
+        );
       }
       if (sortMode === "oldest") {
-        return new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime();
+        return (
+          new Date(left.createdAt).getTime() -
+          new Date(right.createdAt).getTime()
+        );
       }
       if (sortMode === "title-asc") {
         return left.title.localeCompare(right.title);
-      }
-      if (sortMode === "manual") {
-        const leftOrder = left.orderIndex ?? new Date(left.createdAt).getTime();
-        const rightOrder = right.orderIndex ?? new Date(right.createdAt).getTime();
-        return rightOrder - leftOrder;
       }
       return right.title.localeCompare(left.title);
     });
@@ -95,9 +101,13 @@ export default function CategoryDetailsScreen() {
     setListData(categoryTasks);
   }, [categoryTasks]);
 
-  const availableTasks = tasks.filter((task) => task.categoryId === categoryId && task.status !== 'not-available');
+  const availableTasks = tasks.filter(
+    (task) => task.categoryId === categoryId && task.status !== "not-available",
+  );
   const totalTasks = availableTasks.length;
-  const completedTasks = availableTasks.filter((task) => task.status === 'done').length;
+  const completedTasks = availableTasks.filter(
+    (task) => task.status === "done",
+  ).length;
   const remainingTasks = totalTasks - completedTasks;
 
   const handleDelete = useCallback(
@@ -105,7 +115,7 @@ export default function CategoryDetailsScreen() {
       runListAnimation();
       deleteTask(id);
     },
-    [deleteTask]
+    [deleteTask],
   );
 
   const handleToggle = useCallback(
@@ -113,7 +123,7 @@ export default function CategoryDetailsScreen() {
       runListAnimation();
       toggleTaskStatus(id);
     },
-    [toggleTaskStatus]
+    [toggleTaskStatus],
   );
 
   const handleNotAvailable = useCallback(
@@ -121,21 +131,42 @@ export default function CategoryDetailsScreen() {
       runListAnimation();
       setTaskNotAvailable(id);
     },
-    [setTaskNotAvailable]
+    [setTaskNotAvailable],
   );
 
   if (!category || !categoryId) {
     return (
-      <View style={[styles.safeArea, { backgroundColor: colors.background, paddingTop: insets.top }]}> 
+      <View
+        style={[
+          styles.safeArea,
+          { backgroundColor: colors.background, paddingTop: insets.top },
+        ]}
+      >
         <Stack.Screen options={{ headerShown: false }} />
-        <View style={styles.container}> 
+        <View style={styles.container}>
           <View style={styles.headerRow}>
-            <Pressable onPress={() => router.back()} style={[styles.iconButton, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <Pressable
+              onPress={() => router.back()}
+              style={[
+                styles.iconButton,
+                { backgroundColor: colors.surface, borderColor: colors.border },
+              ]}
+            >
               <Ionicons name="chevron-back" size={18} color={colors.text} />
             </Pressable>
           </View>
-          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingBottom: 100 }}>
-            <EmptyState title="Category not found" description="This category may have been removed or the link is invalid." />
+          <View
+            style={{
+              flex: 1,
+              justifyContent: "center",
+              alignItems: "center",
+              paddingBottom: 100,
+            }}
+          >
+            <EmptyState
+              title="Category not found"
+              description="This category may have been removed or the link is invalid."
+            />
           </View>
         </View>
       </View>
@@ -153,72 +184,143 @@ export default function CategoryDetailsScreen() {
             onDelete={handleDelete}
             onToggle={handleToggle}
             onEdit={(task) => setEditingTask(task)}
-            onLongPress={drag}
+            onLongPress={!isActive ? drag : undefined}
             onNotAvailable={handleNotAvailable}
           />
         </VerticalScaleDecorator>
       </View>
     ),
-    [category.color, category.name, timeFormat, handleDelete, handleToggle, handleNotAvailable]
+    [
+      category.color,
+      category.name,
+      timeFormat,
+      handleDelete,
+      handleToggle,
+      handleNotAvailable,
+    ],
   );
 
-  const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+  const progress =
+    totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
   return (
     <View style={[styles.safeArea, { backgroundColor: colors.background }]}>
       <Stack.Screen options={{ headerShown: false }} />
-      <View style={[styles.container, { paddingTop: Math.max(insets.top, 6), backgroundColor: colors.background }]}>
+      <View
+        style={[
+          styles.container,
+          {
+            paddingTop: Math.max(insets.top, 6),
+            backgroundColor: colors.background,
+          },
+        ]}
+      >
         <View style={styles.headerRow}>
-          <Pressable onPress={() => router.back()} style={[styles.iconButton, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <Pressable
+            onPress={() => router.back()}
+            style={[
+              styles.iconButton,
+              { backgroundColor: colors.surface, borderColor: colors.border },
+            ]}
+          >
             <Ionicons name="chevron-back" size={18} color={colors.text} />
           </Pressable>
 
           <View style={styles.headerTitleWrap}>
-            <Text style={[styles.categoryName, { color: colors.text }]} numberOfLines={1}>{category.name}</Text>
+            <Text
+              style={[styles.categoryName, { color: colors.text }]}
+              numberOfLines={1}
+            >
+              {category.name}
+            </Text>
           </View>
 
           <View style={styles.headerActions}>
-            <Pressable 
-              onPress={() => setEditModalVisible(true)} 
-              style={[styles.iconButton, { backgroundColor: colors.surface, borderColor: colors.border }]}
+            <Pressable
+              onPress={() => setEditModalVisible(true)}
+              style={[
+                styles.iconButton,
+                { backgroundColor: colors.surface, borderColor: colors.border },
+              ]}
             >
               <Ionicons name="settings-outline" size={18} color={colors.text} />
             </Pressable>
           </View>
         </View>
 
-        <View style={[styles.summaryCard, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}>
+        <View
+          style={[
+            styles.summaryCard,
+            {
+              backgroundColor: colors.surfaceElevated,
+              borderColor: colors.border,
+            },
+          ]}
+        >
           <View style={styles.summaryTop}>
-            <View style={[styles.categoryIconWrap, { backgroundColor: `${category.color}22` }]}>
+            <View
+              style={[
+                styles.categoryIconWrap,
+                { backgroundColor: `${category.color}22` },
+              ]}
+            >
               <Ionicons name="bookmark" size={24} color={category.color} />
             </View>
             <View style={styles.summaryMain}>
               <View style={styles.progressRow}>
-                <Text style={[styles.progressText, { color: colors.text }]}>{progress}% Done</Text>
-                <Text style={[styles.progressCount, { color: colors.textMuted }]}>{completedTasks}/{totalTasks}</Text>
+                <Text style={[styles.progressText, { color: colors.text }]}>
+                  {progress}% Done
+                </Text>
+                <Text
+                  style={[styles.progressCount, { color: colors.textMuted }]}
+                >
+                  {completedTasks}/{totalTasks}
+                </Text>
               </View>
-              <View style={[styles.progressBarTrack, { backgroundColor: colors.surfaceMuted }]}>
-                <View style={[styles.progressBarFill, { backgroundColor: category.color, width: `${progress}%` }]} />
+              <View
+                style={[
+                  styles.progressBarTrack,
+                  { backgroundColor: colors.surfaceMuted },
+                ]}
+              >
+                <View
+                  style={[
+                    styles.progressBarFill,
+                    { backgroundColor: category.color, width: `${progress}%` },
+                  ]}
+                />
               </View>
             </View>
           </View>
-          
+
           <View style={styles.statsRow}>
             <View style={styles.stat}>
-              <Text style={[styles.statValue, { color: colors.text }]}>{remainingTasks}</Text>
-              <Text style={[styles.statLabel, { color: colors.textMuted }]}>Remaining</Text>
+              <Text style={[styles.statValue, { color: colors.text }]}>
+                {remainingTasks}
+              </Text>
+              <Text style={[styles.statLabel, { color: colors.textMuted }]}>
+                Remaining
+              </Text>
             </View>
-            <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
+            <View
+              style={[styles.statDivider, { backgroundColor: colors.border }]}
+            />
             <View style={styles.stat}>
-              <Text style={[styles.statValue, { color: colors.text }]}>{category.isArchived ? 'Yes' : 'No'}</Text>
-              <Text style={[styles.statLabel, { color: colors.textMuted }]}>Archived</Text>
+              <Text style={[styles.statValue, { color: colors.text }]}>
+                {category.isArchived ? "Yes" : "No"}
+              </Text>
+              <Text style={[styles.statLabel, { color: colors.textMuted }]}>
+                Archived
+              </Text>
             </View>
           </View>
         </View>
 
         <View style={styles.filterBar}>
-          <View style={[styles.chips, { backgroundColor: colors.surfaceMuted }]}>
-            {(['all', 'todo', 'done'] as const).map((filter) => {
+          <View
+            style={[styles.chips, { backgroundColor: colors.surfaceMuted }]}
+          >
+            {(["all", "todo", "done"] as const).map((filter) => {
               const active = taskFilter === filter;
               return (
                 <Pressable
@@ -229,19 +331,32 @@ export default function CategoryDetailsScreen() {
                   }}
                   style={[
                     styles.chipBtn,
-                    active && { backgroundColor: colors.surfaceElevated, borderColor: colors.border, borderWidth: 1 }
+                    active && {
+                      backgroundColor: colors.surfaceElevated,
+                      borderColor: colors.border,
+                      borderWidth: 1,
+                    },
                   ]}
                 >
-                  <Text style={[styles.chipText, { color: active ? colors.text : colors.textMuted }]}>
-                    {filter === 'all' ? 'All' : filter === 'todo' ? 'Today' : 'Done'}
+                  <Text
+                    style={[
+                      styles.chipText,
+                      { color: active ? colors.text : colors.textMuted },
+                    ]}
+                  >
+                    {filter === "all"
+                      ? "All"
+                      : filter === "todo"
+                        ? "Today"
+                        : "Done"}
                   </Text>
                 </Pressable>
               );
             })}
           </View>
 
-          <Pressable 
-            onPress={() => setSortSheetVisible(true)} 
+          <Pressable
+            onPress={() => setSortSheetVisible(true)}
             style={[styles.sortBtn, { backgroundColor: colors.surfaceMuted }]}
           >
             <Ionicons name="swap-vertical" size={16} color={colors.text} />
@@ -253,14 +368,21 @@ export default function CategoryDetailsScreen() {
           onDragEnd={({ data }) => {
             justDragged.current = true;
             setListData(data);
-            if (sortMode !== 'manual') setSortMode('manual');
-            reorderTasks(data.map(t => t.id));
+            reorderTasks(data.map((t) => t.id));
           }}
-          contentContainerStyle={[styles.listContent, { paddingBottom: Math.max(92, insets.bottom + 80) }]}
+          contentContainerStyle={[
+            styles.listContent,
+            { paddingBottom: Math.max(92, insets.bottom + 80) },
+          ]}
           data={listData}
           keyExtractor={(item) => item.id}
           keyboardShouldPersistTaps="handled"
-          ListEmptyComponent={<EmptyState title="No tasks here" description="Tasks in this category will appear here." />}
+          ListEmptyComponent={
+            <EmptyState
+              title="No tasks here"
+              description="Tasks in this category will appear here."
+            />
+          }
           renderItem={renderTask}
         />
 
@@ -303,22 +425,22 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1 },
   container: { flex: 1, paddingHorizontal: 16 },
   headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingVertical: 12,
     gap: 12,
   },
   headerTitleWrap: {
     flex: 1,
-    alignItems: 'center',
+    alignItems: "center",
   },
   categoryName: {
     fontFamily: AppFonts.bold,
     fontSize: 18,
   },
   headerActions: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 8,
   },
   iconButton: {
@@ -326,8 +448,8 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 14,
     borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   summaryCard: {
     borderRadius: 22,
@@ -336,8 +458,8 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   summaryTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 16,
     marginBottom: 16,
   },
@@ -345,16 +467,16 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   summaryMain: {
     flex: 1,
   },
   progressRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 8,
   },
   progressText: {
@@ -368,22 +490,22 @@ const styles = StyleSheet.create({
   progressBarTrack: {
     height: 6,
     borderRadius: 3,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   progressBarFill: {
-    height: '100%',
+    height: "100%",
     borderRadius: 3,
   },
   statsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.05)',
+    borderTopColor: "rgba(255,255,255,0.05)",
     paddingTop: 16,
   },
   stat: {
     flex: 1,
-    alignItems: 'center',
+    alignItems: "center",
   },
   statValue: {
     fontFamily: AppFonts.bold,
@@ -400,14 +522,14 @@ const styles = StyleSheet.create({
     marginHorizontal: 12,
   },
   filterBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 12,
     marginBottom: 16,
   },
   chips: {
     flex: 1,
-    flexDirection: 'row',
+    flexDirection: "row",
     padding: 4,
     borderRadius: 14,
   },
@@ -415,15 +537,15 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 8,
     borderRadius: 10,
-    alignItems: 'center',
+    alignItems: "center",
   },
   chipText: {
     fontFamily: AppFonts.bold,
     fontSize: 13,
   },
   sortBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 6,
     paddingHorizontal: 12,
     paddingVertical: 10,

@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppFonts } from '@/constants/fonts';
 import { useAppTheme } from '@/hooks/use-app-theme';
@@ -33,12 +34,23 @@ export function SettingsOptionSheet<T extends string | number>({
 }: SettingsOptionSheetProps<T>) {
   const colors = useAppTheme();
   const accentColor = tone === 'danger' ? colors.danger : colors.accent;
+  const insets = useSafeAreaInsets();
+  const { height: windowHeight } = useWindowDimensions();
+  const maxSheetHeight = Math.max(240, windowHeight - insets.top - insets.bottom - 56);
 
   return (
-    <Modal animationType="fade" transparent visible={visible} onRequestClose={onClose}>
-      <View style={styles.overlay}>
+    <Modal animationType="fade" transparent visible={visible} onRequestClose={onClose} statusBarTranslucent={true}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.overlay}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-        <View style={[styles.sheet, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}> 
+        <View
+          style={[
+            styles.sheet,
+            {
+              backgroundColor: colors.surfaceElevated,
+              borderColor: colors.border,
+              maxHeight: Math.min(maxSheetHeight, windowHeight * 0.78),
+            },
+          ]}>
           <View style={styles.header}>
             <View style={[styles.iconWrap, { backgroundColor: `${accentColor}22` }]}>
               <Ionicons color={accentColor} name={iconName} size={22} />
@@ -46,7 +58,7 @@ export function SettingsOptionSheet<T extends string | number>({
             <Text style={[styles.title, { color: tone === 'danger' ? colors.danger : colors.text }]}>{title}</Text>
           </View>
 
-          <ScrollView bounces={false} showsVerticalScrollIndicator={false}>
+          <ScrollView bounces={false} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
             {options.map((option) => {
               const selected = selectedValue !== undefined && option.value === selectedValue;
 
@@ -74,7 +86,7 @@ export function SettingsOptionSheet<T extends string | number>({
             })}
           </ScrollView>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
