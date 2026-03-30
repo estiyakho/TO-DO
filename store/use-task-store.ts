@@ -350,8 +350,12 @@ export const useTaskStore = create<TaskStore>()(
         return id;
       },
       reorderCategories: (activeIdsInNewOrder: string[]) => set((state) => {
-        const sortedOrderIndices = state.categories
-          .filter(c => activeIdsInNewOrder.includes(c.id))
+        if (!activeIdsInNewOrder.length) return state;
+
+        const targetCategories = state.categories.filter(c => activeIdsInNewOrder.includes(c.id));
+        if (!targetCategories.length) return state;
+
+        const sortedOrderIndices = targetCategories
           .map(c => c.orderIndex ?? new Date(c.createdAt).getTime())
           .sort((a, b) => b - a);
           
@@ -364,8 +368,12 @@ export const useTaskStore = create<TaskStore>()(
         return { categories: newCategories };
       }),
       reorderTasks: (activeIdsInNewOrder: string[]) => set((state) => {
-        const sortedOrderIndices = state.tasks
-          .filter(t => activeIdsInNewOrder.includes(t.id))
+        if (!activeIdsInNewOrder.length) return state;
+
+        const targetTasks = state.tasks.filter(t => activeIdsInNewOrder.includes(t.id));
+        if (!targetTasks.length) return state;
+
+        const sortedOrderIndices = targetTasks
           .map(t => t.orderIndex ?? new Date(t.createdAt).getTime())
           .sort((a, b) => b - a);
           
@@ -446,13 +454,43 @@ export const useTaskStore = create<TaskStore>()(
           return;
         }
 
-        set((state) => ({
-          tasks: [],
-          settings: {
-            ...state.settings,
-            lastResetAt: new Date().toISOString(),
-          },
-        }));
+        set((state) => {
+          const now = new Date();
+          const resetDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+          // Record completed and not-available tasks into history before resetting
+          const newHistoryEntries: TaskHistoryEntry[] = [];
+          for (const task of state.tasks) {
+            if (task.status === 'done' || task.status === 'not-available') {
+              const alreadyLogged = state.taskHistory.some(
+                (h) => h.taskId === task.id && h.date === resetDate
+              );
+              if (!alreadyLogged) {
+                newHistoryEntries.push({
+                  id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+                  taskId: task.id,
+                  title: task.title,
+                  categoryId: task.categoryId,
+                  date: resetDate,
+                  completedAt: now.toISOString(),
+                });
+              }
+            }
+          }
+
+          return {
+            // Reset all tasks back to 'todo' status instead of deleting them
+            tasks: state.tasks.map((task) => ({
+              ...task,
+              status: 'todo' as TaskStatus,
+            })),
+            taskHistory: [...state.taskHistory, ...newHistoryEntries],
+            settings: {
+              ...state.settings,
+              lastResetAt: now.toISOString(),
+            },
+          };
+        });
       },
       markHydrated: (value) => set({ hydrated: value }),
     }),

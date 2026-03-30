@@ -63,6 +63,29 @@ export default function TodosScreen() {
   const initialCategory = Array.isArray(params.categoryId)
     ? params.categoryId[0]
     : params.categoryId;
+  const getInitialFilteredTasks = useCallback((filter: TaskStatus, catId: string, q: string, mode: SortMode) => {
+    const normalizedQuery = q.trim().toLowerCase();
+    const result = tasks.filter((task) => {
+      const matchesStatus = task.status === filter;
+      const matchesCategory = catId === "all" ? true : task.categoryId === catId;
+      const matchesQuery = !normalizedQuery || task.title.toLowerCase().includes(normalizedQuery);
+      return matchesStatus && matchesCategory && matchesQuery;
+    });
+
+    result.sort((left, right) => {
+      if (mode === "newest") return new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime();
+      if (mode === "oldest") return new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime();
+      if (mode === "title-asc") return left.title.localeCompare(right.title);
+      if (mode === "manual") {
+        const leftOrder = left.orderIndex ?? new Date(left.createdAt).getTime();
+        const rightOrder = right.orderIndex ?? new Date(right.createdAt).getTime();
+        return rightOrder - leftOrder;
+      }
+      return right.title.localeCompare(left.title);
+    });
+    return result;
+  }, [tasks]);
+
   const [activeFilter, setActiveFilter] = useState<TaskStatus>("todo");
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>("all");
   const [query, setQuery] = useState("");
@@ -70,7 +93,8 @@ export default function TodosScreen() {
   const [sortSheetVisible, setSortSheetVisible] = useState(false);
   const [addTaskModalVisible, setAddTaskModalVisible] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | undefined>(undefined);
-  const [listData, setListData] = useState<Task[]>([]);
+  
+  const [listData, setListData] = useState<Task[]>(() => getInitialFilteredTasks("todo", "all", "", "manual"));
   const justDragged = useRef(false);
 
   useLayoutEffect(() => {
@@ -79,50 +103,10 @@ export default function TodosScreen() {
     }
   }, [initialCategory]);
 
-  const filteredTasks = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
-
-    const result = tasks.filter((task) => {
-      const matchesStatus = task.status === activeFilter;
-      const matchesCategory =
-        selectedCategoryId === "all"
-          ? true
-          : task.categoryId === selectedCategoryId;
-      const matchesQuery =
-        !normalizedQuery || task.title.toLowerCase().includes(normalizedQuery);
-      return matchesStatus && matchesCategory && matchesQuery;
-    });
-
-    result.sort((left, right) => {
-      if (sortMode === "newest") {
-        return (
-          new Date(right.createdAt).getTime() -
-          new Date(left.createdAt).getTime()
-        );
-      }
-
-      if (sortMode === "oldest") {
-        return (
-          new Date(left.createdAt).getTime() -
-          new Date(right.createdAt).getTime()
-        );
-      }
-
-      if (sortMode === "title-asc") {
-        return left.title.localeCompare(right.title);
-      }
-
-      if (sortMode === "manual") {
-        const leftOrder = left.orderIndex ?? new Date(left.createdAt).getTime();
-        const rightOrder = right.orderIndex ?? new Date(right.createdAt).getTime();
-        return rightOrder - leftOrder;
-      }
-
-      return right.title.localeCompare(left.title);
-    });
-
-    return result;
-  }, [activeFilter, query, selectedCategoryId, sortMode, tasks]);
+  const filteredTasks = useMemo(() => 
+    getInitialFilteredTasks(activeFilter, selectedCategoryId, query, sortMode),
+    [getInitialFilteredTasks, activeFilter, selectedCategoryId, query, sortMode]
+  );
 
   useEffect(() => {
     if (justDragged.current) {

@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import React from 'react';
+import React, { memo } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { Text, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -7,6 +7,27 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { HapticTab } from '@/components/haptic-tab';
 import { AppFonts } from '@/constants/fonts';
 import { useAppTheme } from '@/hooks/use-app-theme';
+
+const TabBarLabel = memo(({ color, children, baseLabelSize }: { color: string; children: string; baseLabelSize: number }) => {
+  const label = children;
+  const fontSize = label === 'Statistics' ? baseLabelSize - 1.8 : label === 'Categories' ? baseLabelSize - 1.25 : baseLabelSize;
+  const fontFamily = label === 'Categories' || label === 'All Todos' ? AppFonts.bold : AppFonts.semibold;
+
+  return (
+    <Text
+      numberOfLines={1}
+      style={{
+        color,
+        fontFamily,
+        fontSize,
+        includeFontPadding: false,
+        lineHeight: fontSize + 2,
+        textAlign: 'center',
+      }}>
+      {children}
+    </Text>
+  );
+});
 
 export default function TabLayout() {
   const colors = useAppTheme();
@@ -43,26 +64,9 @@ export default function TabLayout() {
           marginBottom: 1,
           marginTop: -4,
         },
-        tabBarLabel: ({ color, children }) => {
-          const label = String(children);
-          const fontSize = label === 'Statistics' ? baseLabelSize - 1.8 : label === 'Categories' ? baseLabelSize - 1.25 : baseLabelSize;
-          const fontFamily = label === 'Categories' || label === 'All Todos' ? AppFonts.bold : AppFonts.semibold;
-
-          return (
-            <Text
-              numberOfLines={1}
-              style={{
-                color,
-                fontFamily,
-                fontSize,
-                includeFontPadding: false,
-                lineHeight: fontSize + 2,
-                textAlign: 'center',
-              }}>
-              {children}
-            </Text>
-          );
-        },
+        tabBarLabel: ({ color, children }) => (
+          <TabBarLabel color={color} baseLabelSize={baseLabelSize}>{String(children)}</TabBarLabel>
+        ),
         tabBarLabelPosition: 'below-icon',
         tabBarStyle: {
           backgroundColor: colors.surfaceElevated,

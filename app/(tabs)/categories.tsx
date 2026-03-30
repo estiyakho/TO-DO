@@ -138,29 +138,24 @@ export default function CategoriesScreen() {
   const tasks = useTaskStore((state) => state.tasks);
   const reorderCategories = useTaskStore((state) => state.reorderCategories);
 
-  const [query, setQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<CategoryTab>('active');
-  const [categoryModalVisible, setCategoryModalVisible] = useState(false);
-  const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
-  const [listData, setListData] = useState<typeof filteredCategories>([]);
-  const justDragged = useRef(false);
-
   const categorySummaries = useMemo(() => {
     return categories.map((category) => {
       const relatedTasks = tasks.filter((task) => task.categoryId === category.id && task.status !== 'not-available');
       const completed = relatedTasks.filter((task) => task.status === 'done').length;
-      const remaining = relatedTasks.length - completed;
       const progress = relatedTasks.length ? Math.round((completed / relatedTasks.length) * 100) : 0;
 
       return {
         ...category,
         total: relatedTasks.length,
         completed,
-        remaining,
+        remaining: relatedTasks.length - completed,
         progress,
       };
     });
   }, [categories, tasks]);
+
+  const [query, setQuery] = useState('');
+  const [activeTab, setActiveTab] = useState<CategoryTab>('active');
 
   const filteredCategories = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -180,6 +175,11 @@ export default function CategoriesScreen() {
       return orderB - orderA;
     });
   }, [activeTab, categorySummaries, query]);
+
+  const [categoryModalVisible, setCategoryModalVisible] = useState(false);
+  const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
+  const [listData, setListData] = useState<typeof filteredCategories>(filteredCategories);
+  const justDragged = useRef(false);
 
   useEffect(() => {
     if (justDragged.current) {

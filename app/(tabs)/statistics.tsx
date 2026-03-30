@@ -272,27 +272,51 @@ export default function StatisticsScreen() {
     if (!currentSelectedTaskIdentity) return [];
     const [title, categoryId] = currentSelectedTaskIdentity.split("|");
 
-    const daysCount = historyViewMode === "weekly" ? 7 : 30;
     const data = [];
     const now = new Date();
 
-    for (let i = daysCount - 1; i >= 0; i--) {
-      const d = new Date(now);
-      d.setDate(now.getDate() - i);
-      const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-      const count = taskHistory.filter(
-        (h) => h.title === title && (h.categoryId || "") === categoryId && h.date === dateStr
-      ).length;
+    if (historyViewMode === "weekly") {
+      // Start from the beginning of the current week based on firstDayOfWeek
+      const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+      const firstDayIndex = dayNames.indexOf(firstDayOfWeek);
+      const currentDayIndex = now.getDay();
+      const daysToSubtract = (currentDayIndex - firstDayIndex + 7) % 7;
+      const weekStart = new Date(now);
+      weekStart.setDate(now.getDate() - daysToSubtract);
+      weekStart.setHours(0, 0, 0, 0);
 
-      data.push({
-        date: dateStr,
-        day: d.getDate(),
-        weekday: d.toLocaleDateString(undefined, { weekday: 'short' }),
-        count,
-      });
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(weekStart);
+        d.setDate(weekStart.getDate() + i);
+        const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        const count = taskHistory.filter(
+          (h) => h.title === title && (h.categoryId || "") === categoryId && h.date === dateStr
+        ).length;
+        data.push({
+          date: dateStr,
+          day: d.getDate(),
+          weekday: d.toLocaleDateString(undefined, { weekday: 'short' }),
+          count,
+        });
+      }
+    } else {
+      for (let i = 29; i >= 0; i--) {
+        const d = new Date(now);
+        d.setDate(now.getDate() - i);
+        const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        const count = taskHistory.filter(
+          (h) => h.title === title && (h.categoryId || "") === categoryId && h.date === dateStr
+        ).length;
+        data.push({
+          date: dateStr,
+          day: d.getDate(),
+          weekday: d.toLocaleDateString(undefined, { weekday: 'short' }),
+          count,
+        });
+      }
     }
     return data;
-  }, [currentSelectedTaskIdentity, historyViewMode, taskHistory]);
+  }, [currentSelectedTaskIdentity, historyViewMode, taskHistory, firstDayOfWeek]);
 
   const maxHistoryCount = Math.max(...historyChartData.map((d: any) => d.count)) || 1;
 
@@ -374,7 +398,7 @@ export default function StatisticsScreen() {
           </View>
 
           <View style={[styles.chartCard, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}>
-            <Text style={[styles.chartTitle, { color: colors.text }]}>Task Persistence</Text>
+            <Text style={[styles.chartTitle, { color: colors.text }]}>Week View</Text>
             {currentSelectedTaskIdentity ? (
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalChart}>
                 <View style={[styles.chartArea, { minWidth: historyViewMode === "weekly" ? '100.1%' : 800, height: 120, alignItems: 'flex-end' }]}>
