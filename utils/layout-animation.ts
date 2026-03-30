@@ -6,3 +6,7 @@ import { LayoutAnimation, Platform, UIManager } from 'react-native';
 export function runListAnimation() {
   LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
 }
+
+export function runSpringAnimation() {
+  LayoutAnimation.configureNext(LayoutAnimation.Presets.spring);
+}

@@ -15,6 +15,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import * as Haptics from 'expo-haptics';
 import DraggableFlatList, { RenderItemParams } from "react-native-draggable-flatlist";
 
 import { EmptyState } from "@/components/empty-state";
@@ -27,7 +28,7 @@ import { AppFonts } from "@/constants/fonts";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useTaskStore } from "@/store/use-task-store";
 import { Task, TaskStatus } from "@/types/task";
-import { runListAnimation } from "@/utils/layout-animation";
+import { runListAnimation, runSpringAnimation } from "@/utils/layout-animation";
 
 const FILTER_OPTIONS: { label: string; value: TaskStatus }[] = [
   { label: "Doing", value: "todo" },
@@ -167,22 +168,24 @@ export default function TodosScreen() {
 
   const renderTask = useCallback(
     ({ item, drag, isActive }: RenderItemParams<Task>) => (
-      <VerticalScaleDecorator activeScale={1.03}>
-        <TaskItem
-          task={item}
-          category={
-            item.categoryId ? categoryMap.get(item.categoryId) : undefined
-          }
-          timeFormat={timeFormat}
-          onDelete={handleDelete}
-          onToggle={handleToggle}
-          onNotAvailable={handleNotAvailable}
-          onEdit={handleEdit}
-          onLongPress={!isActive ? drag : undefined}
-        />
-      </VerticalScaleDecorator>
+      <View style={{ paddingBottom: 12 }}>
+        <VerticalScaleDecorator activeScale={1.03}>
+          <TaskItem
+            task={item}
+            category={
+              item.categoryId ? categoryMap.get(item.categoryId) : undefined
+            }
+            timeFormat={timeFormat}
+            onDelete={handleDelete}
+            onToggle={handleToggle}
+            onNotAvailable={handleNotAvailable}
+            onEdit={handleEdit}
+            onLongPress={!isActive ? drag : undefined}
+          />
+        </VerticalScaleDecorator>
+      </View>
     ),
-    [categoryMap, handleDelete, handleToggle, handleEdit, timeFormat, handleNotAvailable, sortMode],
+    [categoryMap, handleDelete, handleToggle, handleEdit, timeFormat, handleNotAvailable],
   );
 
   return (
@@ -292,9 +295,16 @@ export default function TodosScreen() {
         </ScrollView>
 
         <DraggableFlatList
+          onDragBegin={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          }}
           onDragEnd={({ data }) => {
-            reorderTasks(data.map(t => t.id));
-            if (sortMode !== 'manual') setSortMode('manual');
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            if (sortMode !== 'manual') {
+              setSortMode('manual');
+            }
+            const ids = data.map(t => t.id);
+            reorderTasks(ids);
           }}
           contentContainerStyle={[styles.listContent, { paddingBottom: Math.max(92, insets.bottom + 80) }]}
           data={filteredTasks}
@@ -320,10 +330,6 @@ export default function TodosScreen() {
           }
           renderItem={renderTask}
           showsVerticalScrollIndicator={false}
-          windowSize={8}
-          initialNumToRender={10}
-          maxToRenderPerBatch={12}
-          updateCellsBatchingPeriod={50}
         />
 
         <FloatingActionButton onPress={() => setAddTaskModalVisible(true)} />

@@ -112,7 +112,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 1,
     flexDirection: 'row',
-    marginBottom: 12,
     minHeight: 80,
     paddingHorizontal: 12,
     paddingVertical: 12,

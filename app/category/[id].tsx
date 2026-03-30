@@ -1,3 +1,4 @@
+import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
@@ -128,6 +129,26 @@ export default function CategoryDetailsScreen() {
     );
   }
 
+  const renderTask = useCallback(
+    ({ item, drag, isActive }: RenderItemParams<Task>) => (
+      <View style={{ paddingBottom: 12 }}>
+        <VerticalScaleDecorator activeScale={1.03}>
+          <TaskItem
+            task={item}
+            category={{ color: category.color, name: category.name }}
+            timeFormat={timeFormat}
+            onDelete={handleDelete}
+            onToggle={handleToggle}
+            onNotAvailable={handleNotAvailable}
+            onEdit={(task) => setEditingTask(task)}
+            onLongPress={!isActive ? drag : undefined}
+          />
+        </VerticalScaleDecorator>
+      </View>
+    ),
+    [category.color, category.name, timeFormat, handleDelete, handleToggle, handleNotAvailable]
+  );
+
   return (
     <View style={[styles.safeArea, { backgroundColor: colors.background }]}> 
       <Stack.Screen options={{ headerShown: false }} />
@@ -208,29 +229,23 @@ export default function CategoryDetailsScreen() {
         </View>
 
         <DraggableFlatList
+          onDragBegin={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          }}
           onDragEnd={({ data }) => {
-            reorderTasks(data.map(t => t.id));
-            if (sortMode !== 'manual') setSortMode('manual');
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            if (sortMode !== 'manual') {
+              setSortMode('manual');
+            }
+            const ids = data.map(t => t.id);
+            reorderTasks(ids);
           }}
           contentContainerStyle={[styles.listContent, { paddingBottom: Math.max(92, insets.bottom + 80) }]}
           data={categoryTasks}
           keyExtractor={(item) => item.id}
           keyboardShouldPersistTaps="handled"
           ListEmptyComponent={<EmptyState title="No tasks here" description="Tasks in this category will appear here." />}
-          renderItem={({ item, drag, isActive }: RenderItemParams<Task>) => (
-            <VerticalScaleDecorator activeScale={1.03}>
-              <TaskItem
-                task={item}
-                category={{ color: category.color, name: category.name }}
-                timeFormat={timeFormat}
-                onDelete={handleDelete}
-                onToggle={handleToggle}
-                onNotAvailable={handleNotAvailable}
-                onEdit={(task) => setEditingTask(task)}
-                onLongPress={!isActive ? drag : undefined}
-              />
-            </VerticalScaleDecorator>
-          )}
+          renderItem={renderTask}
           showsVerticalScrollIndicator={false}
         />
         <FloatingActionButton iconName="add" onPress={() => setIsAddingTask(true)} />

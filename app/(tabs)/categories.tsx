@@ -1,10 +1,11 @@
-import { Ionicons } from '@expo/vector-icons';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import DraggableFlatList, { RenderItemParams } from 'react-native-draggable-flatlist';
 import Svg, { Circle } from 'react-native-svg';
+import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 
 import { CategoryFormModal } from '@/components/category-form-modal';
 import { FloatingActionButton } from '@/components/floating-action-button';
@@ -26,7 +27,7 @@ function ProgressRing({ progress, color, labelColor, baseColor }: { progress: nu
 
   return (
     <View style={styles.ringWrap}>
-      <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+      <Svg width={size} height={size} viewBox={`0 0 \${size} \${size}`}>
         <Circle
           cx={size / 2}
           cy={size / 2}
@@ -46,7 +47,7 @@ function ProgressRing({ progress, color, labelColor, baseColor }: { progress: nu
             strokeDasharray={circumference}
             strokeDashoffset={strokeDashoffset}
             strokeLinecap="round"
-            transform={`rotate(-90 ${size / 2} ${size / 2})`}
+            transform={`rotate(-90 \${size / 2} \${size / 2})`}
           />
         )}
       </Svg>
@@ -136,6 +137,52 @@ export default function CategoriesScreen() {
     }
   };
 
+  const renderCategory = useCallback(
+    ({ item, drag, isActive }: RenderItemParams<typeof filteredCategories[0]>) => (
+      <View style={{ paddingBottom: 10 }}>
+        <VerticalScaleDecorator activeScale={1.04}>
+          <Pressable
+            onLongPress={!isActive ? drag : undefined}
+            delayLongPress={200}
+            onPress={() => router.push({ pathname: '/category/[id]', params: { id: item.id } })}
+            style={[styles.card, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}> 
+          <View style={styles.cardLeft}>
+            <ProgressRing color={item.color} progress={item.progress} labelColor={colors.text} baseColor={colors.border} />
+            <View style={styles.cardTextWrap}>
+              <Text numberOfLines={1} style={[styles.cardTitle, { color: colors.text }]}>{item.name}</Text>
+              <Text numberOfLines={2} style={[styles.cardMeta, { color: colors.textMuted }]}>
+                {item.description || (item.remaining > 0 ? \`\${item.remaining} task\${item.remaining > 1 ? 's' : ''} left\` : 'All tasks completed')}
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.actionArea}>
+            <View style={[styles.countPill, { backgroundColor: colors.surfaceMuted }]}> 
+              <Text style={[styles.countText, { color: colors.text }]}>{item.completed}/{item.total}</Text>
+            </View>
+            
+            {activeTab === 'active' ? (
+              <Pressable onPress={() => handleArchive(item.id)} style={[styles.actionIconPill, { backgroundColor: colors.surfaceMuted }]}>
+                <Ionicons name="archive-outline" size={18} color={colors.textSoft} />
+              </Pressable>
+            ) : (
+              <View style={styles.archivedActions}>
+                <Pressable onPress={() => handleUnarchive(item.id)} style={[styles.actionIconPill, { backgroundColor: colors.surfaceMuted }]}>
+                  <Ionicons name="refresh-outline" size={18} color={colors.textSoft} />
+                </Pressable>
+                <Pressable onPress={() => setCategoryToDelete(item.id)} style={[styles.actionIconPill, { backgroundColor: \`\${colors.danger}20\` }]}>
+                  <Ionicons name="trash-outline" size={18} color={colors.danger} />
+                </Pressable>
+              </View>
+            )}
+          </View>
+          </Pressable>
+        </VerticalScaleDecorator>
+      </View>
+    ),
+    [colors, activeTab, router]
+  );
+
   return (
     <View style={[styles.safeArea, { backgroundColor: colors.background }]}> 
       <View style={[styles.container, { paddingTop: Math.max(insets.top, 6), backgroundColor: colors.background }]}> 
@@ -152,7 +199,7 @@ export default function CategoriesScreen() {
 
         <View style={[styles.summaryCard, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}> 
           <View style={styles.summaryTop}>
-            <View style={[styles.summaryIconWrap, { backgroundColor: `${colors.accent}CC` }]}>
+            <View style={[styles.summaryIconWrap, { backgroundColor: \`\${colors.accent}CC\` }]}>
               <Ionicons color="#F8FAFC" name="flag-outline" size={22} />
             </View>
             <View style={styles.summaryTextWrap}>
@@ -163,7 +210,7 @@ export default function CategoriesScreen() {
 
           <View style={styles.progressRow}>
             <View style={[styles.progressTrack, { backgroundColor: colors.surfaceMuted }]}> 
-              <View style={[styles.progressFill, { backgroundColor: colors.accent, width: `${overallProgress}%` }]} />
+              <View style={[styles.progressFill, { backgroundColor: colors.accent, width: \`\${overallProgress}%\` } ]} />
             </View>
             <Text style={[styles.progressValue, { color: colors.accent }]}>{overallProgress}%</Text>
           </View>
@@ -192,51 +239,18 @@ export default function CategoriesScreen() {
         </View>
 
         <DraggableFlatList
-          onDragEnd={({ data }) => reorderCategories(data.map(c => c.id))}
+          onDragBegin={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          }}
+          onDragEnd={({ data }) => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            reorderCategories(data.map(c => c.id));
+          }}
           contentContainerStyle={[styles.listContent, { paddingBottom: Math.max(92, insets.bottom + 80) }]}
           data={filteredCategories}
           keyExtractor={(item) => item.id}
           keyboardShouldPersistTaps="handled"
-          renderItem={({ item, drag, isActive }: RenderItemParams<typeof filteredCategories[0]>) => (
-            <VerticalScaleDecorator activeScale={1.04}>
-              <Pressable
-                onLongPress={!isActive ? drag : undefined}
-                delayLongPress={200}
-                onPress={() => router.push({ pathname: '/category/[id]', params: { id: item.id } })}
-                style={[styles.card, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}> 
-              <View style={styles.cardLeft}>
-                <ProgressRing color={item.color} progress={item.progress} labelColor={colors.text} baseColor={colors.border} />
-                <View style={styles.cardTextWrap}>
-                  <Text numberOfLines={1} style={[styles.cardTitle, { color: colors.text }]}>{item.name}</Text>
-                  <Text numberOfLines={2} style={[styles.cardMeta, { color: colors.textMuted }]}>
-                    {item.description || (item.remaining > 0 ? `${item.remaining} task${item.remaining > 1 ? 's' : ''} left` : 'All tasks completed')}
-                  </Text>
-                </View>
-              </View>
-
-              <View style={styles.actionArea}>
-                <View style={[styles.countPill, { backgroundColor: colors.surfaceMuted }]}> 
-                  <Text style={[styles.countText, { color: colors.text }]}>{item.completed}/{item.total}</Text>
-                </View>
-                
-                {activeTab === 'active' ? (
-                  <Pressable onPress={() => handleArchive(item.id)} style={[styles.actionIconPill, { backgroundColor: colors.surfaceMuted }]}>
-                    <Ionicons name="archive-outline" size={18} color={colors.textSoft} />
-                  </Pressable>
-                ) : (
-                  <View style={styles.archivedActions}>
-                    <Pressable onPress={() => handleUnarchive(item.id)} style={[styles.actionIconPill, { backgroundColor: colors.surfaceMuted }]}>
-                      <Ionicons name="refresh-outline" size={18} color={colors.textSoft} />
-                    </Pressable>
-                    <Pressable onPress={() => setCategoryToDelete(item.id)} style={[styles.actionIconPill, { backgroundColor: `${colors.danger}20` }]}>
-                      <Ionicons name="trash-outline" size={18} color={colors.danger} />
-                    </Pressable>
-                  </View>
-                )}
-              </View>
-              </Pressable>
-            </VerticalScaleDecorator>
-          )}
+          renderItem={renderCategory}
           ListEmptyComponent={
             <View style={styles.emptyWrap}>
               <Text style={[styles.emptyTitle, { color: colors.text }]}>
@@ -391,7 +405,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 10,
     minHeight: 90,
     paddingHorizontal: 12,
     paddingVertical: 10,
