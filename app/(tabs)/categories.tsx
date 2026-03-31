@@ -1,10 +1,10 @@
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
 import DraggableFlatList, { RenderItemParams } from 'react-native-draggable-flatlist';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle } from 'react-native-svg';
-import { Ionicons } from '@expo/vector-icons';
 
 import { CategoryFormModal } from '@/components/category-form-modal';
 import { FloatingActionButton } from '@/components/floating-action-button';
@@ -20,7 +20,7 @@ function ProgressRing({ progress, color, labelColor, baseColor }: { progress: nu
   const strokeWidth = 5;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
-  
+
   const clampedProgress = Math.min(Math.max(progress, 0), 100);
   const strokeDashoffset = circumference - (clampedProgress / 100) * circumference;
 
@@ -77,7 +77,7 @@ const CategoryItem = memo(({ item, drag, isActive, onPress, onArchive, onUnarchi
           onLongPress={!isActive ? drag : undefined}
           delayLongPress={200}
           onPress={() => onPress(item.id)}
-          style={[styles.card, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}> 
+          style={[styles.card, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}>
           <View style={styles.cardLeft}>
             <ProgressRing color={item.color} progress={item.progress} labelColor={colors.text} baseColor={colors.border} />
             <View style={styles.cardTextWrap}>
@@ -89,10 +89,10 @@ const CategoryItem = memo(({ item, drag, isActive, onPress, onArchive, onUnarchi
           </View>
 
           <View style={styles.actionArea}>
-            <View style={[styles.countPill, { backgroundColor: colors.surfaceMuted }]}> 
+            <View style={[styles.countPill, { backgroundColor: colors.surfaceMuted }]}>
               <Text style={[styles.countText, { color: colors.text }]}>{item.completed}/{item.total}</Text>
             </View>
-            
+
             {activeTab === 'active' ? (
               <Pressable onPress={() => onArchive(item.id)} style={[styles.actionIconPill, { backgroundColor: colors.surfaceMuted }]}>
                 <Ionicons name="archive-outline" size={18} color={colors.textSoft} />
@@ -239,9 +239,9 @@ export default function CategoriesScreen() {
   );
 
   return (
-    <View style={[styles.safeArea, { backgroundColor: colors.background }]}> 
-      <View style={[styles.container, { paddingTop: Math.max(insets.top, 6), backgroundColor: colors.background }]}> 
-        <View style={[styles.searchBar, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}> 
+    <View style={[styles.safeArea, { backgroundColor: colors.background }]}>
+      <View style={[styles.container, { paddingTop: Math.max(insets.top, 6), backgroundColor: colors.background }]}>
+        <View style={[styles.searchBar, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}>
           <Ionicons color={colors.textMuted} name="search-outline" size={24} />
           <TextInput
             onChangeText={setQuery}
@@ -252,7 +252,7 @@ export default function CategoriesScreen() {
           />
         </View>
 
-        <View style={[styles.summaryCard, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}> 
+        <View style={[styles.summaryCard, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}>
           <View style={styles.summaryTop}>
             <View style={[styles.summaryIconWrap, { backgroundColor: `${colors.accent}CC` }]}>
               <Ionicons color="#F8FAFC" name="flag-outline" size={22} />
@@ -264,18 +264,18 @@ export default function CategoriesScreen() {
           </View>
 
           <View style={styles.progressRow}>
-            <View style={[styles.progressTrack, { backgroundColor: colors.surfaceMuted }]}> 
-              <View style={[styles.progressFill, { backgroundColor: colors.accent, width: `${overallProgress}%` } ]} />
+            <View style={[styles.progressTrack, { backgroundColor: colors.surfaceMuted }]}>
+              <View style={[styles.progressFill, { backgroundColor: colors.accent, width: `${overallProgress}%` }]} />
             </View>
             <Text style={[styles.progressValue, { color: colors.accent }]}>{overallProgress}%</Text>
           </View>
 
           <View style={styles.summaryStats}>
-            <View style={[styles.statPill, { backgroundColor: colors.surfaceMuted, borderColor: colors.border }]}> 
+            <View style={[styles.statPill, { backgroundColor: colors.surfaceMuted, borderColor: colors.border }]}>
               <Ionicons color={colors.accent} name="checkmark-circle-outline" size={16} />
               <Text style={[styles.statText, { color: colors.text }]}>{completedTasks} Completed</Text>
             </View>
-            <View style={[styles.statPill, { backgroundColor: colors.surfaceMuted, borderColor: colors.border }]}> 
+            <View style={[styles.statPill, { backgroundColor: colors.surfaceMuted, borderColor: colors.border }]}>
               <Ionicons color={colors.warning} name="list-outline" size={16} />
               <Text style={[styles.statText, { color: colors.text }]}>{remainingTasks} Remaining</Text>
             </View>
@@ -310,8 +310,8 @@ export default function CategoriesScreen() {
                 {activeTab === 'active' ? 'No categories yet' : 'Archive is empty'}
               </Text>
               <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-                {activeTab === 'active' 
-                  ? 'Add category to organize todos.' 
+                {activeTab === 'active'
+                  ? 'Add category to organize todos.'
                   : 'An item not currently needed may be stored here. It can become useful in the future.'}
               </Text>
             </View>
