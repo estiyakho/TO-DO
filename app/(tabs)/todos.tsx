@@ -6,27 +6,25 @@ import {
   useLayoutEffect,
   useMemo,
   useRef,
-  useState,
+  useState
 } from "react";
 import {
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from "react-native";
-import DraggableFlatList, {
-  RenderItemParams,
-} from "react-native-draggable-flatlist";
+import { ScrollView } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import DraggableFlatList, { RenderItemParams } from "react-native-draggable-flatlist";
 
 import { EmptyState } from "@/components/empty-state";
+import { VerticalScaleDecorator } from "@/components/vertical-scale-decorator";
 import { FloatingActionButton } from "@/components/floating-action-button";
 import { SettingsOptionSheet } from "@/components/settings-option-sheet";
 import { TaskFormModal } from "@/components/task-form-modal";
 import { TaskItem } from "@/components/task-item";
-import { VerticalScaleDecorator } from "@/components/vertical-scale-decorator";
 import { AppFonts } from "@/constants/fonts";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useTaskStore } from "@/store/use-task-store";
@@ -46,7 +44,7 @@ const SORT_OPTIONS = [
   { label: "Title Z-A", value: "title-desc" as const },
 ];
 
-type SortMode = (typeof SORT_OPTIONS)[number]["value"];
+type SortMode = (typeof SORT_OPTIONS)[number]["value"] | "manual";
 
 export default function TodosScreen() {
   const params = useLocalSearchParams<{ categoryId?: string | string[] }>();
@@ -57,58 +55,43 @@ export default function TodosScreen() {
   const categories = useTaskStore((state) => state.categories);
   const toggleTaskStatus = useTaskStore((state) => state.toggleTaskStatus);
   const deleteTask = useTaskStore((state) => state.deleteTask);
-  const setTaskNotAvailable = useTaskStore(
-    (state) => state.setTaskNotAvailable,
-  );
+  const setTaskNotAvailable = useTaskStore((state) => state.setTaskNotAvailable);
   const reorderTasks = useTaskStore((state) => state.reorderTasks);
   const timeFormat = useTaskStore((state) => state.settings.timeFormat);
 
   const initialCategory = Array.isArray(params.categoryId)
     ? params.categoryId[0]
     : params.categoryId;
-  const getInitialFilteredTasks = useCallback(
-    (filter: TaskStatus, catId: string, q: string, mode: SortMode) => {
-      const normalizedQuery = q.trim().toLowerCase();
-      const result = tasks.filter((task) => {
-        const matchesStatus = task.status === filter;
-        const matchesCategory =
-          catId === "all" ? true : task.categoryId === catId;
-        const matchesQuery =
-          !normalizedQuery ||
-          task.title.toLowerCase().includes(normalizedQuery);
-        return matchesStatus && matchesCategory && matchesQuery;
-      });
+  const getInitialFilteredTasks = useCallback((filter: TaskStatus, catId: string, q: string, mode: SortMode) => {
+    const normalizedQuery = q.trim().toLowerCase();
+    const result = tasks.filter((task) => {
+      const matchesStatus = task.status === filter;
+      const matchesCategory = catId === "all" ? true : task.categoryId === catId;
+      const matchesQuery = !normalizedQuery || task.title.toLowerCase().includes(normalizedQuery);
+      return matchesStatus && matchesCategory && matchesQuery;
+    });
 
-      result.sort((left, right) => {
-        if (mode === "newest")
-          return (
-            new Date(right.createdAt).getTime() -
-            new Date(left.createdAt).getTime()
-          );
-        if (mode === "oldest")
-          return (
-            new Date(left.createdAt).getTime() -
-            new Date(right.createdAt).getTime()
-          );
-        if (mode === "title-asc") return left.title.localeCompare(right.title);
-        return right.title.localeCompare(left.title);
-      });
-      return result;
-    },
-    [tasks],
-  );
+    result.sort((left, right) => {
+      if (mode === "manual") {
+        return (right.orderIndex ?? 0) - (left.orderIndex ?? 0);
+      }
+      if (mode === "newest") return new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime();
+      if (mode === "oldest") return new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime();
+      if (mode === "title-asc") return left.title.localeCompare(right.title);
+      return right.title.localeCompare(left.title);
+    });
+    return result;
+  }, [tasks]);
 
   const [activeFilter, setActiveFilter] = useState<TaskStatus>("todo");
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>("all");
   const [query, setQuery] = useState("");
-  const [sortMode, setSortMode] = useState<SortMode>("newest");
+  const [sortMode, setSortMode] = useState<SortMode>("manual");
   const [sortSheetVisible, setSortSheetVisible] = useState(false);
   const [addTaskModalVisible, setAddTaskModalVisible] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | undefined>(undefined);
-
-  const [listData, setListData] = useState<Task[]>(() =>
-    getInitialFilteredTasks("todo", "all", "", "newest"),
-  );
+  
+  const [listData, setListData] = useState<Task[]>(() => getInitialFilteredTasks("todo", "all", "", "manual"));
   const justDragged = useRef(false);
 
   useLayoutEffect(() => {
@@ -117,21 +100,9 @@ export default function TodosScreen() {
     }
   }, [initialCategory]);
 
-  const filteredTasks = useMemo(
-    () =>
-      getInitialFilteredTasks(
-        activeFilter,
-        selectedCategoryId,
-        query,
-        sortMode,
-      ),
-    [
-      getInitialFilteredTasks,
-      activeFilter,
-      selectedCategoryId,
-      query,
-      sortMode,
-    ],
+  const filteredTasks = useMemo(() => 
+    getInitialFilteredTasks(activeFilter, selectedCategoryId, query, sortMode),
+    [getInitialFilteredTasks, activeFilter, selectedCategoryId, query, sortMode]
   );
 
   useEffect(() => {
@@ -172,9 +143,12 @@ export default function TodosScreen() {
     [toggleTaskStatus],
   );
 
-  const handleEdit = useCallback((task: Task) => {
-    setEditingTask(task);
-  }, []);
+  const handleEdit = useCallback(
+    (task: Task) => {
+      setEditingTask(task);
+    },
+    [],
+  );
 
   const handleNotAvailable = useCallback(
     (id: string) => {
@@ -203,179 +177,143 @@ export default function TodosScreen() {
         </VerticalScaleDecorator>
       </View>
     ),
-    [
-      categoryMap,
-      handleDelete,
-      handleToggle,
-      handleEdit,
-      timeFormat,
-      handleNotAvailable,
-    ],
+    [categoryMap, handleDelete, handleToggle, handleEdit, timeFormat, handleNotAvailable],
   );
 
   return (
     <View style={[styles.safeArea, { backgroundColor: colors.background }]}>
-      <View
-        style={[
-          styles.container,
-          {
-            paddingTop: Math.max(insets.top, 6),
-            backgroundColor: colors.background,
-          },
-        ]}
-      >
-        <View
-          style={[
-            styles.searchBar,
-            {
-              backgroundColor: colors.surfaceElevated,
-              borderColor: colors.border,
-            },
-          ]}
-        >
-          <Ionicons color={colors.textMuted} name="search-outline" size={24} />
-          <TextInput
-            onChangeText={setQuery}
-            placeholder="Search Todo"
-            placeholderTextColor={colors.textMuted}
-            style={[styles.searchInput, { color: colors.text }]}
-            value={query}
-          />
-        </View>
-
-        <View style={styles.tabRow}>
-          {FILTER_OPTIONS.map((option) => {
-            const active = option.value === activeFilter;
-            return (
-              <Pressable
-                key={option.value}
-                onPress={() => setActiveFilter(option.value)}
-                style={styles.tabButton}
-              >
-                <Text
-                  style={[
-                    styles.tabLabel,
-                    { color: active ? colors.text : colors.textMuted },
-                  ]}
-                >
-                  {option.label}
-                </Text>
-                {active ? (
-                  <View
-                    style={[
-                      styles.tabIndicator,
-                      { backgroundColor: colors.accent },
-                    ]}
-                  />
-                ) : null}
-              </Pressable>
-            );
-          })}
-          <Pressable
-            style={styles.filterButton}
-            onPress={() => setSortSheetVisible(true)}
-          >
-            <Ionicons
-              name="filter-outline"
-              size={18}
-              color={colors.textMuted}
-            />
-          </Pressable>
-        </View>
-
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.chipsContent}
-          style={styles.chipsRow}
-        >
-          <Pressable
-            onPress={() => setSelectedCategoryId("all")}
-            style={[
-              styles.chip,
-              {
-                backgroundColor:
-                  selectedCategoryId === "all"
-                    ? colors.accent
-                    : colors.surfaceMuted,
-                borderColor:
-                  selectedCategoryId === "all" ? colors.accent : colors.border,
-              },
-            ]}
-          >
-            <Text
-              style={[
-                styles.chipText,
-                {
-                  color:
-                    selectedCategoryId === "all"
-                      ? colors.isLight
-                        ? "#0F172A"
-                        : "#F8FAFC"
-                      : colors.textSoft,
-                },
-              ]}
-            >
-              All
-            </Text>
-          </Pressable>
-          {categories
-            .filter((c) => !c.isArchived)
-            .map((category) => {
-              const active = selectedCategoryId === category.id;
-              return (
-                <Pressable
-                  key={category.id}
-                  onPress={() => setSelectedCategoryId(category.id)}
-                  style={[
-                    styles.chip,
-                    {
-                      backgroundColor: active
-                        ? category.color
-                        : colors.surfaceMuted,
-                      borderColor: active ? category.color : colors.border,
-                    },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.chipText,
-                      {
-                        color: active
-                          ? colors.isLight
-                            ? "#0F172A"
-                            : "#F8FAFC"
-                          : colors.textSoft,
-                      },
-                    ]}
-                  >
-                    {category.name}
-                  </Text>
-                </Pressable>
-              );
-            })}
-        </ScrollView>
-
+      <View style={[styles.container, { paddingTop: Math.max(insets.top, 6), backgroundColor: colors.background }]}>
         <DraggableFlatList
           onDragEnd={({ data }) => {
             justDragged.current = true;
             setListData(data);
-            reorderTasks(data.map((t) => t.id));
+            setSortMode("manual");
+            reorderTasks(data.map(t => t.id));
           }}
-          contentContainerStyle={[
-            styles.listContent,
-            { paddingBottom: Math.max(92, insets.bottom + 80) },
-          ]}
+          contentContainerStyle={[styles.listContent, { paddingBottom: Math.max(92, insets.bottom + 80) }]}
           data={listData}
           keyExtractor={(item) => item.id}
           keyboardShouldPersistTaps="handled"
+          ListHeaderComponent={
+            <View style={{ paddingTop: 6 }}>
+              <View
+                style={[
+                  styles.searchBar,
+                  {
+                    backgroundColor: colors.surfaceElevated,
+                    borderColor: colors.border,
+                  },
+                ]}
+              >
+                <Ionicons color={colors.textMuted} name="search-outline" size={24} />
+                <TextInput
+                  onChangeText={setQuery}
+                  placeholder="Search Todo"
+                  placeholderTextColor={colors.textMuted}
+                  style={[styles.searchInput, { color: colors.text }]}
+                  value={query}
+                />
+              </View>
+
+              <View style={styles.filterBar}>
+                <View style={[styles.chips, { backgroundColor: colors.surfaceElevated }]}>
+                  {FILTER_OPTIONS.map((option) => {
+                    const active = option.value === activeFilter;
+                    return (
+                      <Pressable
+                        key={option.value}
+                        onPress={() => {
+                          runListAnimation();
+                          setActiveFilter(option.value);
+                        }}
+                        style={[
+                          styles.chipBtn,
+                          active && { backgroundColor: colors.accent },
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.chipText,
+                            { color: active ? (colors.isLight ? '#0F172A' : '#F8FAFC') : colors.textMuted },
+                          ]}
+                        >
+                          {option.label}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+
+                <Pressable
+                  onPress={() => setSortSheetVisible(true)}
+                  style={[
+                    styles.sortBtn,
+                    { backgroundColor: colors.surfaceElevated, borderColor: colors.border },
+                  ]}
+                >
+                  <Ionicons
+                    name="swap-vertical"
+                    size={16}
+                    color={colors.textSoft}
+                  />
+                  <Text style={[styles.sortText, { color: colors.textSoft }]}>Sort</Text>
+                </Pressable>
+              </View>
+
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                nestedScrollEnabled={true}
+                disallowInterruption={true}
+                contentContainerStyle={styles.chipsContent}
+                style={[styles.chipsRow, { width: '100%' }]}
+              >
+                <Pressable
+                  onPress={() => setSelectedCategoryId("all")}
+                  style={[
+                    styles.chip,
+                    {
+                      backgroundColor:
+                        selectedCategoryId === "all"
+                          ? colors.accent
+                          : colors.surfaceMuted,
+                      borderColor:
+                        selectedCategoryId === "all" ? colors.accent : colors.border,
+                    },
+                  ]}
+                >
+                  <Text style={[styles.chipText, { color: selectedCategoryId === "all" ? (colors.isLight ? '#0F172A' : '#F8FAFC') : colors.textSoft }]}>All</Text>
+                </Pressable>
+                {categories.filter((c) => !c.isArchived).map((category) => {
+                  const active = selectedCategoryId === category.id;
+                  return (
+                    <Pressable
+                      key={category.id}
+                      onPress={() => setSelectedCategoryId(category.id)}
+                      style={[
+                        styles.chip,
+                        {
+                          backgroundColor: active ? category.color : colors.surfaceMuted,
+                          borderColor: active ? category.color : colors.border,
+                        },
+                      ]}
+                    >
+                      <Text style={[styles.chipText, { color: active ? (colors.isLight ? '#0F172A' : '#F8FAFC') : colors.textSoft }]}>
+                        {category.name}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+            </View>
+          }
           ListEmptyComponent={
             <EmptyState
               title={
-                activeFilter === "todo"
-                  ? "Add a Todo"
-                  : activeFilter === "done"
-                    ? "Finished Tasks"
+                activeFilter === "todo" 
+                  ? "Add a Todo" 
+                  : activeFilter === "done" 
+                    ? "Finished Tasks" 
                     : "Not Available"
               }
               description={
@@ -437,34 +375,42 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginLeft: 10,
   },
-  tabRow: {
-    alignItems: "center",
+  filterBar: {
     flexDirection: "row",
-    marginBottom: 8,
+    alignItems: "center",
+    gap: 12,
+    marginBottom: 16,
   },
-  tabButton: {
-    marginRight: 20,
-    paddingBottom: 10,
-    position: "relative",
+  chips: {
+    flex: 1,
+    flexDirection: "row",
+    padding: 4,
+    borderRadius: 14,
   },
-  tabLabel: {
-    fontFamily: AppFonts.semibold,
-    fontSize: 17,
+  chipBtn: {
+    flex: 1,
+    paddingVertical: 8,
+    borderRadius: 10,
+    alignItems: "center",
   },
-  tabIndicator: {
-    borderRadius: 999,
-    bottom: 0,
-    height: 4,
-    left: 0,
-    position: "absolute",
-    width: 36,
+  chipText: {
+    fontFamily: AppFonts.bold,
+    fontSize: 13,
   },
-  filterButton: {
-    marginLeft: "auto",
-    padding: 6,
+  sortBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 14,
+  },
+  sortText: {
+    fontFamily: AppFonts.bold,
+    fontSize: 13,
   },
   chipsRow: {
-    marginBottom: 8,
+    marginBottom: 16,
     maxHeight: 50,
   },
   chipsContent: {
@@ -478,13 +424,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     height: 42,
     minWidth: 65,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  chipText: {
-    fontFamily: AppFonts.semibold,
-    fontSize: 14,
-    includeFontPadding: false,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   listContent: {
     flexGrow: 1,
