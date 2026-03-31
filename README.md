@@ -29,7 +29,7 @@ Designed for mobile devices, it has a clean, tabbed interface for easy task mana
 
 ## ✨ What The App Does
 
-`View Due` has **five main sections**:
+`Viewdue` has **five main sections**:
 
 * **Categories** – create and browse task categories and track progress.
 * **All Todos** – add tasks, filter by status or category, search, and sort.
