@@ -183,109 +183,6 @@ export default function TodosScreen() {
   return (
     <View style={[styles.safeArea, { backgroundColor: colors.background }]}>
       <View style={[styles.container, { paddingTop: Math.max(insets.top, 6), backgroundColor: colors.background }]}>
-        <View
-          style={[
-            styles.searchBar,
-            {
-              backgroundColor: colors.surfaceElevated,
-              borderColor: colors.border,
-            },
-          ]}
-        >
-          <Ionicons color={colors.textMuted} name="search-outline" size={24} />
-          <TextInput
-            onChangeText={setQuery}
-            placeholder="Search Todo"
-            placeholderTextColor={colors.textMuted}
-            style={[styles.searchInput, { color: colors.text }]}
-            value={query}
-          />
-        </View>
-
-        <View style={styles.tabRow}>
-          {FILTER_OPTIONS.map((option) => {
-            const active = option.value === activeFilter;
-            return (
-              <Pressable
-                key={option.value}
-                onPress={() => setActiveFilter(option.value)}
-                style={styles.tabButton}
-              >
-                <Text
-                  style={[
-                    styles.tabLabel,
-                    { color: active ? colors.text : colors.textMuted },
-                  ]}
-                >
-                  {option.label}
-                </Text>
-                {active ? (
-                  <View
-                    style={[
-                      styles.tabIndicator,
-                      { backgroundColor: colors.accent },
-                    ]}
-                  />
-                ) : null}
-              </Pressable>
-            );
-          })}
-          <Pressable
-            style={styles.filterButton}
-            onPress={() => setSortSheetVisible(true)}
-          >
-            <Ionicons
-              name="filter-outline"
-              size={18}
-              color={colors.textMuted}
-            />
-          </Pressable>
-        </View>
-
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.chipsContent}
-          style={styles.chipsRow}
-        >
-          <Pressable
-            onPress={() => setSelectedCategoryId("all")}
-            style={[
-              styles.chip,
-              {
-                backgroundColor:
-                  selectedCategoryId === "all"
-                    ? colors.accent
-                    : colors.surfaceMuted,
-                borderColor:
-                  selectedCategoryId === "all" ? colors.accent : colors.border,
-              },
-            ]}
-          >
-            <Text style={[styles.chipText, { color: selectedCategoryId === "all" ? (colors.isLight ? '#0F172A' : '#F8FAFC') : colors.textSoft }]}>All</Text>
-          </Pressable>
-          {categories.filter((c) => !c.isArchived).map((category) => {
-            const active = selectedCategoryId === category.id;
-            return (
-              <Pressable
-                key={category.id}
-                onPress={() => setSelectedCategoryId(category.id)}
-                style={[
-                  styles.chip,
-                  {
-                    backgroundColor: active ? category.color : colors.surfaceMuted,
-                    borderColor: active ? category.color : colors.border,
-                  },
-                ]}
-              >
-                <Text style={[styles.chipText, { color: active ? (colors.isLight ? '#0F172A' : '#F8FAFC') : colors.textSoft }]}>
-                  {category.name}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </ScrollView>
-
         <DraggableFlatList
           onDragEnd={({ data }) => {
             justDragged.current = true;
@@ -297,6 +194,117 @@ export default function TodosScreen() {
           data={listData}
           keyExtractor={(item) => item.id}
           keyboardShouldPersistTaps="handled"
+          ListHeaderComponent={
+            <View style={{ paddingTop: 6 }}>
+              <View
+                style={[
+                  styles.searchBar,
+                  {
+                    backgroundColor: colors.surfaceElevated,
+                    borderColor: colors.border,
+                  },
+                ]}
+              >
+                <Ionicons color={colors.textMuted} name="search-outline" size={24} />
+                <TextInput
+                  onChangeText={setQuery}
+                  placeholder="Search Todo"
+                  placeholderTextColor={colors.textMuted}
+                  style={[styles.searchInput, { color: colors.text }]}
+                  value={query}
+                />
+              </View>
+
+              <View style={styles.filterBar}>
+                <View style={[styles.chips, { backgroundColor: colors.surfaceElevated }]}>
+                  {FILTER_OPTIONS.map((option) => {
+                    const active = option.value === activeFilter;
+                    return (
+                      <Pressable
+                        key={option.value}
+                        onPress={() => {
+                          runListAnimation();
+                          setActiveFilter(option.value);
+                        }}
+                        style={[
+                          styles.chipBtn,
+                          active && { backgroundColor: colors.accent },
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.chipText,
+                            { color: active ? (colors.isLight ? '#0F172A' : '#F8FAFC') : colors.textMuted },
+                          ]}
+                        >
+                          {option.label}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+
+                <Pressable
+                  onPress={() => setSortSheetVisible(true)}
+                  style={[
+                    styles.sortBtn,
+                    { backgroundColor: colors.surfaceElevated, borderColor: colors.border },
+                  ]}
+                >
+                  <Ionicons
+                    name="swap-vertical"
+                    size={16}
+                    color={colors.textSoft}
+                  />
+                  <Text style={[styles.sortText, { color: colors.textSoft }]}>Sort</Text>
+                </Pressable>
+              </View>
+
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.chipsContent}
+                style={styles.chipsRow}
+              >
+                <Pressable
+                  onPress={() => setSelectedCategoryId("all")}
+                  style={[
+                    styles.chip,
+                    {
+                      backgroundColor:
+                        selectedCategoryId === "all"
+                          ? colors.accent
+                          : colors.surfaceMuted,
+                      borderColor:
+                        selectedCategoryId === "all" ? colors.accent : colors.border,
+                    },
+                  ]}
+                >
+                  <Text style={[styles.chipText, { color: selectedCategoryId === "all" ? (colors.isLight ? '#0F172A' : '#F8FAFC') : colors.textSoft }]}>All</Text>
+                </Pressable>
+                {categories.filter((c) => !c.isArchived).map((category) => {
+                  const active = selectedCategoryId === category.id;
+                  return (
+                    <Pressable
+                      key={category.id}
+                      onPress={() => setSelectedCategoryId(category.id)}
+                      style={[
+                        styles.chip,
+                        {
+                          backgroundColor: active ? category.color : colors.surfaceMuted,
+                          borderColor: active ? category.color : colors.border,
+                        },
+                      ]}
+                    >
+                      <Text style={[styles.chipText, { color: active ? (colors.isLight ? '#0F172A' : '#F8FAFC') : colors.textSoft }]}>
+                        {category.name}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+            </View>
+          }
           ListEmptyComponent={
             <EmptyState
               title={
@@ -365,34 +373,42 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginLeft: 10,
   },
-  tabRow: {
-    alignItems: "center",
+  filterBar: {
     flexDirection: "row",
-    marginBottom: 8,
+    alignItems: "center",
+    gap: 12,
+    marginBottom: 16,
   },
-  tabButton: {
-    marginRight: 20,
-    paddingBottom: 10,
-    position: "relative",
+  chips: {
+    flex: 1,
+    flexDirection: "row",
+    padding: 4,
+    borderRadius: 14,
   },
-  tabLabel: {
-    fontFamily: AppFonts.semibold,
-    fontSize: 17,
+  chipBtn: {
+    flex: 1,
+    paddingVertical: 8,
+    borderRadius: 10,
+    alignItems: "center",
   },
-  tabIndicator: {
-    borderRadius: 999,
-    bottom: 0,
-    height: 4,
-    left: 0,
-    position: "absolute",
-    width: 36,
+  chipText: {
+    fontFamily: AppFonts.bold,
+    fontSize: 13,
   },
-  filterButton: {
-    marginLeft: "auto",
-    padding: 6,
+  sortBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 14,
+  },
+  sortText: {
+    fontFamily: AppFonts.bold,
+    fontSize: 13,
   },
   chipsRow: {
-    marginBottom: 8,
+    marginBottom: 16,
     maxHeight: 50,
   },
   chipsContent: {
@@ -408,11 +424,6 @@ const styles = StyleSheet.create({
     minWidth: 65,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  chipText: {
-    fontFamily: AppFonts.semibold,
-    fontSize: 14,
-    includeFontPadding: false,
   },
   listContent: {
     flexGrow: 1,
