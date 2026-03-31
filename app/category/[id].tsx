@@ -27,7 +27,7 @@ const SORT_OPTIONS = [
   { label: "Title Z-A", value: "title-desc" as const },
 ];
 
-type SortMode = (typeof SORT_OPTIONS)[number]["value"];
+type SortMode = (typeof SORT_OPTIONS)[number]["value"] | "manual";
 type CategoryTaskFilter = "all" | TaskStatus;
 
 export default function CategoryDetailsScreen() {
@@ -50,8 +50,8 @@ export default function CategoryDetailsScreen() {
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | undefined>(undefined);
   const [isAddingTask, setIsAddingTask] = useState(false);
-  const [taskFilter, setTaskFilter] = useState<CategoryTaskFilter>("all");
-  const [sortMode, setSortMode] = useState<SortMode>("newest");
+  const [taskFilter, setTaskFilter] = useState<CategoryTaskFilter>("todo");
+  const [sortMode, setSortMode] = useState<SortMode>("manual");
   const [sortSheetVisible, setSortSheetVisible] = useState(false);
 
   const categoryId = Array.isArray(params.id) ? params.id[0] : params.id || "";
@@ -69,6 +69,9 @@ export default function CategoryDetailsScreen() {
     }
 
     result.sort((left, right) => {
+      if (sortMode === "manual") {
+        return (right.orderIndex ?? 0) - (left.orderIndex ?? 0);
+      }
       if (sortMode === "newest") {
         return (
           new Date(right.createdAt).getTime() -
@@ -248,128 +251,165 @@ export default function CategoryDetailsScreen() {
           </View>
         </View>
 
-        <View
-          style={[
-            styles.summaryCard,
-            {
-              backgroundColor: colors.surfaceElevated,
-              borderColor: colors.border,
-            },
-          ]}
-        >
-          <View style={styles.summaryTop}>
-            <View
-              style={[
-                styles.categoryIconWrap,
-                { backgroundColor: `${category.color}22` },
-              ]}
-            >
-              <Ionicons name="bookmark" size={24} color={category.color} />
-            </View>
-            <View style={styles.summaryMain}>
-              <View style={styles.progressRow}>
-                <Text style={[styles.progressText, { color: colors.text }]}>
-                  {progress}% Done
-                </Text>
-                <Text
-                  style={[styles.progressCount, { color: colors.textMuted }]}
-                >
-                  {completedTasks}/{totalTasks}
-                </Text>
-              </View>
-              <View
-                style={[
-                  styles.progressBarTrack,
-                  { backgroundColor: colors.surfaceMuted },
-                ]}
-              >
-                <View
-                  style={[
-                    styles.progressBarFill,
-                    { backgroundColor: category.color, width: `${progress}%` },
-                  ]}
-                />
-              </View>
-            </View>
-          </View>
 
-          <View style={styles.statsRow}>
-            <View style={styles.stat}>
-              <Text style={[styles.statValue, { color: colors.text }]}>
-                {remainingTasks}
-              </Text>
-              <Text style={[styles.statLabel, { color: colors.textMuted }]}>
-                Remaining
-              </Text>
-            </View>
-            <View
-              style={[styles.statDivider, { backgroundColor: colors.border }]}
-            />
-            <View style={styles.stat}>
-              <Text style={[styles.statValue, { color: colors.text }]}>
-                {category.isArchived ? "Yes" : "No"}
-              </Text>
-              <Text style={[styles.statLabel, { color: colors.textMuted }]}>
-                Archived
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        <View style={styles.filterBar}>
-          <View
-            style={[styles.chips, { backgroundColor: colors.surfaceMuted }]}
-          >
-            {(["all", "todo", "done"] as const).map((filter) => {
-              const active = taskFilter === filter;
-              return (
-                <Pressable
-                  key={filter}
-                  onPress={() => {
-                    runListAnimation();
-                    setTaskFilter(filter);
-                  }}
-                  style={[
-                    styles.chipBtn,
-                    active && {
-                      backgroundColor: colors.surfaceElevated,
-                      borderColor: colors.border,
-                      borderWidth: 1,
-                    },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.chipText,
-                      { color: active ? colors.text : colors.textMuted },
-                    ]}
-                  >
-                    {filter === "all"
-                      ? "All"
-                      : filter === "todo"
-                        ? "Today"
-                        : "Done"}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-
-          <Pressable
-            onPress={() => setSortSheetVisible(true)}
-            style={[styles.sortBtn, { backgroundColor: colors.surfaceMuted }]}
-          >
-            <Ionicons name="swap-vertical" size={16} color={colors.text} />
-            <Text style={[styles.sortText, { color: colors.text }]}>Sort</Text>
-          </Pressable>
-        </View>
 
         <DraggableFlatList
           onDragEnd={({ data }) => {
             justDragged.current = true;
             setListData(data);
+            setSortMode("manual");
             reorderTasks(data.map((t) => t.id));
           }}
+          ListHeaderComponent={
+            <View>
+              <View
+                style={[
+                  styles.summaryCard,
+                  {
+                    backgroundColor: colors.surfaceElevated,
+                    borderColor: colors.border,
+                  },
+                ]}
+              >
+                <View style={styles.summaryTop}>
+                  <View
+                    style={[
+                      styles.categoryIconWrap,
+                      { backgroundColor: `${category.color}22` },
+                    ]}
+                  >
+                    <Ionicons name="bookmark" size={24} color={category.color} />
+                  </View>
+                  <View style={styles.summaryMain}>
+                    <View style={styles.progressRow}>
+                      <Text
+                        style={[styles.progressText, { color: colors.text }]}
+                      >
+                        {progress}% Done
+                      </Text>
+                      <Text
+                        style={[
+                          styles.progressCount,
+                          { color: colors.textMuted },
+                        ]}
+                      >
+                        {completedTasks}/{totalTasks}
+                      </Text>
+                    </View>
+                    <View
+                      style={[
+                        styles.progressBarTrack,
+                        { backgroundColor: colors.surfaceMuted },
+                      ]}
+                    >
+                      <View
+                        style={[
+                          styles.progressBarFill,
+                          {
+                            backgroundColor: category.color,
+                            width: `${progress}%`,
+                          },
+                        ]}
+                      />
+                    </View>
+                  </View>
+                </View>
+
+                <View style={styles.statsRow}>
+                  <View style={styles.stat}>
+                    <Text style={[styles.statValue, { color: colors.text }]}>
+                      {remainingTasks}
+                    </Text>
+                    <Text
+                      style={[styles.statLabel, { color: colors.textMuted }]}
+                    >
+                      Remaining
+                    </Text>
+                  </View>
+                  <View
+                    style={[
+                      styles.statDivider,
+                      { backgroundColor: colors.border },
+                    ]}
+                  />
+                  <View style={styles.stat}>
+                    <Text style={[styles.statValue, { color: colors.text }]}>
+                      {completedTasks}
+                    </Text>
+                    <Text
+                      style={[styles.statLabel, { color: colors.textMuted }]}
+                    >
+                      Done
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              <View style={styles.filterBar}>
+                <View
+                  style={[
+                    styles.chips,
+                    { backgroundColor: colors.surfaceMuted },
+                  ]}
+                >
+                  {(["todo", "done", "not-available"] as const).map(
+                    (filter) => {
+                      const active = taskFilter === filter;
+                      return (
+                        <Pressable
+                          key={filter}
+                          onPress={() => {
+                            runListAnimation();
+                            setTaskFilter(filter);
+                          }}
+                          style={[
+                            styles.chipBtn,
+                            active && {
+                              backgroundColor: colors.surfaceElevated,
+                              borderColor: colors.border,
+                              borderWidth: 1,
+                            },
+                          ]}
+                        >
+                          <Text
+                            style={[
+                              styles.chipText,
+                              {
+                                color: active ? colors.text : colors.textMuted,
+                              },
+                            ]}
+                          >
+                            {filter === "todo"
+                              ? "Doing"
+                              : filter === "done"
+                                ? "Done"
+                                : "N/A"}
+                          </Text>
+                        </Pressable>
+                      );
+                    },
+                  )}
+                </View>
+
+                <Pressable
+                  onPress={() => setSortSheetVisible(true)}
+                  style={[
+                    styles.sortBtn,
+                    { backgroundColor: colors.surfaceMuted },
+                  ]}
+                >
+                  <Ionicons
+                    name="swap-vertical"
+                    size={16}
+                    color={colors.text}
+                  />
+                  <Text style={[styles.sortText, { color: colors.text }]}>
+                    Sort
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
+          }
           contentContainerStyle={[
             styles.listContent,
             { paddingBottom: Math.max(92, insets.bottom + 80) },
@@ -379,8 +419,20 @@ export default function CategoryDetailsScreen() {
           keyboardShouldPersistTaps="handled"
           ListEmptyComponent={
             <EmptyState
-              title="No tasks here"
-              description="Tasks in this category will appear here."
+              title={
+                taskFilter === "todo"
+                  ? "Nothing to do"
+                  : taskFilter === "done"
+                    ? "No finished tasks"
+                    : "N/A"
+              }
+              description={
+                taskFilter === "todo"
+                  ? "Tasks you need to work on will appear here."
+                  : taskFilter === "done"
+                    ? "Finished tasks will appear here."
+                    : "Task that are not available today will appear here."
+              }
             />
           }
           renderItem={renderTask}

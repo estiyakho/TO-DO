@@ -44,7 +44,7 @@ const SORT_OPTIONS = [
   { label: "Title Z-A", value: "title-desc" as const },
 ];
 
-type SortMode = (typeof SORT_OPTIONS)[number]["value"];
+type SortMode = (typeof SORT_OPTIONS)[number]["value"] | "manual";
 
 export default function TodosScreen() {
   const params = useLocalSearchParams<{ categoryId?: string | string[] }>();
@@ -72,6 +72,9 @@ export default function TodosScreen() {
     });
 
     result.sort((left, right) => {
+      if (mode === "manual") {
+        return (right.orderIndex ?? 0) - (left.orderIndex ?? 0);
+      }
       if (mode === "newest") return new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime();
       if (mode === "oldest") return new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime();
       if (mode === "title-asc") return left.title.localeCompare(right.title);
@@ -83,12 +86,12 @@ export default function TodosScreen() {
   const [activeFilter, setActiveFilter] = useState<TaskStatus>("todo");
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>("all");
   const [query, setQuery] = useState("");
-  const [sortMode, setSortMode] = useState<SortMode>("newest");
+  const [sortMode, setSortMode] = useState<SortMode>("manual");
   const [sortSheetVisible, setSortSheetVisible] = useState(false);
   const [addTaskModalVisible, setAddTaskModalVisible] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | undefined>(undefined);
   
-  const [listData, setListData] = useState<Task[]>(() => getInitialFilteredTasks("todo", "all", "", "newest"));
+  const [listData, setListData] = useState<Task[]>(() => getInitialFilteredTasks("todo", "all", "", "manual"));
   const justDragged = useRef(false);
 
   useLayoutEffect(() => {
@@ -287,6 +290,7 @@ export default function TodosScreen() {
           onDragEnd={({ data }) => {
             justDragged.current = true;
             setListData(data);
+            setSortMode("manual");
             reorderTasks(data.map(t => t.id));
           }}
           contentContainerStyle={[styles.listContent, { paddingBottom: Math.max(92, insets.bottom + 80) }]}
