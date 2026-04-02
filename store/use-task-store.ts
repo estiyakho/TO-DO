@@ -260,13 +260,15 @@ export const useTaskStore = create<TaskStore>()(
             );
 
             if (!alreadyLogged) {
+              const nowISO = new Date().toISOString();
               newTaskHistory.push({
                 id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
                 taskId: id,
                 title: task.title,
                 categoryId: task.categoryId,
+                status: "done",
                 date: today,
-                completedAt: new Date().toISOString(),
+                completedAt: nowISO,
               });
             }
           }
@@ -458,27 +460,24 @@ export const useTaskStore = create<TaskStore>()(
           const now = new Date();
           const resetDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
-          // Record completed and not-available tasks into history before resetting
+          // Record ALL active tasks into history before resetting
           const newHistoryEntries: TaskHistoryEntry[] = [];
           for (const task of state.tasks) {
-            // Skip tasks in archived categories
-            const category = state.categories.find(c => c.id === task.categoryId);
-            if (category?.isArchived) continue;
+            // Check if this task already has history for today (to avoid duplicates if already marked done)
+            const alreadyLogged = state.taskHistory.some(
+              (h) => h.taskId === task.id && h.date === resetDate
+            );
 
-            if (task.status === 'done' || task.status === 'not-available') {
-              const alreadyLogged = state.taskHistory.some(
-                (h) => h.taskId === task.id && h.date === resetDate
-              );
-              if (!alreadyLogged) {
-                newHistoryEntries.push({
-                  id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-                  taskId: task.id,
-                  title: task.title,
-                  categoryId: task.categoryId,
-                  date: resetDate,
-                  completedAt: now.toISOString(),
-                });
-              }
+            if (!alreadyLogged) {
+              newHistoryEntries.push({
+                id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+                taskId: task.id,
+                title: task.title,
+                categoryId: task.categoryId,
+                status: task.status, // Current status (todo, done, or not-available)
+                date: resetDate,
+                completedAt: now.toISOString(),
+              });
             }
           }
 
@@ -531,7 +530,10 @@ export const useTaskStore = create<TaskStore>()(
         return {
           tasks: state?.tasks ?? [],
           scheduledTasks: (state as any)?.scheduledTasks ?? [],
-          taskHistory: state?.taskHistory ?? [],
+          taskHistory: (state?.taskHistory ?? []).map(h => ({
+             ...h,
+             status: (h as any).status ?? 'done' // Default old history to 'done'
+          })),
           categories: (state?.categories ?? DEFAULT_CATEGORIES).map(
             (category) => ({
               ...category,
