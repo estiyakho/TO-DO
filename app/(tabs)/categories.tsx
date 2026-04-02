@@ -252,53 +252,56 @@ export default function CategoriesScreen() {
           />
         </View>
 
-        <View style={[styles.summaryCard, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}>
-          <View style={styles.summaryTop}>
-            <View style={[styles.summaryIconWrap, { backgroundColor: `${colors.accent}CC` }]}>
-              <Ionicons color="#F8FAFC" name="flag-outline" size={22} />
-            </View>
-            <View style={styles.summaryTextWrap}>
-              <Text style={[styles.summaryTitle, { color: colors.text }]}>Let&apos;s start!</Text>
-              <Text style={[styles.summarySubtitle, { color: colors.textMuted }]}>All Todos progress</Text>
-            </View>
-          </View>
-
-          <View style={styles.progressRow}>
-            <View style={[styles.progressTrack, { backgroundColor: colors.surfaceMuted }]}>
-              <View style={[styles.progressFill, { backgroundColor: colors.accent, width: `${overallProgress}%` }]} />
-            </View>
-            <Text style={[styles.progressValue, { color: colors.accent }]}>{overallProgress}%</Text>
-          </View>
-
-          <View style={styles.summaryStats}>
-            <View style={[styles.statPill, { backgroundColor: colors.surfaceMuted, borderColor: colors.border }]}>
-              <Ionicons color={colors.accent} name="checkmark-circle-outline" size={16} />
-              <Text style={[styles.statText, { color: colors.text }]}>{completedTasks} Completed</Text>
-            </View>
-            <View style={[styles.statPill, { backgroundColor: colors.surfaceMuted, borderColor: colors.border }]}>
-              <Ionicons color={colors.warning} name="list-outline" size={16} />
-              <Text style={[styles.statText, { color: colors.text }]}>{remainingTasks} Remaining</Text>
-            </View>
-          </View>
-        </View>
-
-        <View style={styles.tabRow}>
-          <Pressable onPress={() => setActiveTab('active')} style={styles.tabButton}>
-            <Text style={[styles.tabLabel, { color: activeTab === 'active' ? colors.text : colors.textMuted }]}>Active</Text>
-            {activeTab === 'active' ? <View style={[styles.tabIndicator, { backgroundColor: colors.accent }]} /> : null}
-          </Pressable>
-          <Pressable onPress={() => setActiveTab('archived')} style={styles.tabButton}>
-            <Text style={[styles.tabLabel, { color: activeTab === 'archived' ? colors.text : colors.textMuted }]}>Archived</Text>
-            {activeTab === 'archived' ? <View style={[styles.tabIndicator, { backgroundColor: colors.accent }]} /> : null}
-          </Pressable>
-        </View>
-
         <DraggableFlatList
           onDragEnd={({ data }) => {
             justDragged.current = true;
             setListData(data);
             reorderCategories(data.map(c => c.id));
           }}
+          ListHeaderComponent={
+            <View>
+              <View style={[styles.summaryCard, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}>
+                <View style={styles.summaryTop}>
+                  <View style={[styles.summaryIconWrap, { backgroundColor: `${colors.accent}CC` }]}>
+                    <Ionicons color="#F8FAFC" name="flag-outline" size={22} />
+                  </View>
+                  <View style={styles.summaryTextWrap}>
+                    <Text style={[styles.summaryTitle, { color: colors.text }]}>Let&apos;s start!</Text>
+                    <Text style={[styles.summarySubtitle, { color: colors.textMuted }]}>All Todos progress</Text>
+                  </View>
+                </View>
+
+                <View style={styles.progressRow}>
+                  <View style={[styles.progressTrack, { backgroundColor: colors.surfaceMuted }]}>
+                    <View style={[styles.progressFill, { backgroundColor: colors.accent, width: `${overallProgress}%` }]} />
+                  </View>
+                  <Text style={[styles.progressValue, { color: colors.accent }]}>{overallProgress}%</Text>
+                </View>
+
+                <View style={styles.summaryStats}>
+                  <View style={[styles.statPill, { backgroundColor: colors.surfaceMuted, borderColor: colors.border }]}>
+                    <Ionicons color={colors.accent} name="checkmark-circle-outline" size={16} />
+                    <Text style={[styles.statText, { color: colors.text }]}>{completedTasks} Completed</Text>
+                  </View>
+                  <View style={[styles.statPill, { backgroundColor: colors.surfaceMuted, borderColor: colors.border }]}>
+                    <Ionicons color={colors.warning} name="list-outline" size={16} />
+                    <Text style={[styles.statText, { color: colors.text }]}>{remainingTasks} Remaining</Text>
+                  </View>
+                </View>
+              </View>
+
+              <View style={styles.tabRow}>
+                <Pressable onPress={() => setActiveTab('active')} style={styles.tabButton}>
+                  <Text style={[styles.tabLabel, { color: activeTab === 'active' ? colors.text : colors.textMuted }]}>Active</Text>
+                  {activeTab === 'active' ? <View style={[styles.tabIndicator, { backgroundColor: colors.accent }]} /> : null}
+                </Pressable>
+                <Pressable onPress={() => setActiveTab('archived')} style={styles.tabButton}>
+                  <Text style={[styles.tabLabel, { color: activeTab === 'archived' ? colors.text : colors.textMuted }]}>Archived</Text>
+                  {activeTab === 'archived' ? <View style={[styles.tabIndicator, { backgroundColor: colors.accent }]} /> : null}
+                </Pressable>
+              </View>
+            </View>
+          }
           contentContainerStyle={[styles.listContent, { paddingBottom: Math.max(92, insets.bottom + 80) }]}
           data={listData}
           keyExtractor={(item) => item.id}

@@ -461,6 +461,10 @@ export const useTaskStore = create<TaskStore>()(
           // Record completed and not-available tasks into history before resetting
           const newHistoryEntries: TaskHistoryEntry[] = [];
           for (const task of state.tasks) {
+            // Skip tasks in archived categories
+            const category = state.categories.find(c => c.id === task.categoryId);
+            if (category?.isArchived) continue;
+
             if (task.status === 'done' || task.status === 'not-available') {
               const alreadyLogged = state.taskHistory.some(
                 (h) => h.taskId === task.id && h.date === resetDate
@@ -479,11 +483,17 @@ export const useTaskStore = create<TaskStore>()(
           }
 
           return {
-            // Reset all tasks back to 'todo' status instead of deleting them
-            tasks: state.tasks.map((task) => ({
-              ...task,
-              status: 'todo' as TaskStatus,
-            })),
+            // Reset active tasks back to 'todo' status, but skip archived categories
+            tasks: state.tasks.map((task) => {
+              const category = state.categories.find(c => c.id === task.categoryId);
+              if (category?.isArchived) {
+                return task;
+              }
+              return {
+                ...task,
+                status: 'todo' as TaskStatus,
+              };
+            }),
             taskHistory: [...state.taskHistory, ...newHistoryEntries],
             settings: {
               ...state.settings,

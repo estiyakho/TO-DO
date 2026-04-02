@@ -7,6 +7,11 @@
     "icon": "./assets/images/icon.png",
     "scheme": "viewdue",
     "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/images/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#000000"
+    },
 
     "ios": {
       "bundleIdentifier": "com.viewdue.app",

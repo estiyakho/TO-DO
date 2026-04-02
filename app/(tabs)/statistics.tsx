@@ -67,6 +67,8 @@ export default function StatisticsScreen() {
 
   const total = statsTasks.length;
   const today = statsTasks.filter((task) => {
+    const isDone = task.status === "done";
+    if (!isDone) return false;
     const date = new Date(task.createdAt);
     const now = new Date();
     return (
@@ -76,6 +78,8 @@ export default function StatisticsScreen() {
     );
   }).length;
   const thisWeek = statsTasks.filter((task) => {
+    const isDone = task.status === "done";
+    if (!isDone) return false;
     const taskDate = new Date(task.createdAt);
     const now = new Date();
     const weekStart = new Date(now);
@@ -140,6 +144,7 @@ export default function StatisticsScreen() {
     return orderedDayLabels.map((day, index) => ({
       day,
       count: statsTasks.filter((task) => {
+        if (task.status !== "done") return false;
         const taskDay = new Date(task.createdAt).getDay();
         return taskDay === orderedDayIndices[index];
       }).length,
@@ -150,27 +155,27 @@ export default function StatisticsScreen() {
     {
       label: "12 AM - 6 AM",
       count: statsTasks.filter(
-        (task) => new Date(task.createdAt).getHours() < 6,
+        (task) => task.status === "done" && new Date(task.createdAt).getHours() < 6,
       ).length,
     },
     {
       label: "6 AM - 12 PM",
       count: statsTasks.filter((task) => {
         const hour = new Date(task.createdAt).getHours();
-        return hour >= 6 && hour < 12;
+        return task.status === "done" && hour >= 6 && hour < 12;
       }).length,
     },
     {
       label: "12 PM - 6 PM",
       count: statsTasks.filter((task) => {
         const hour = new Date(task.createdAt).getHours();
-        return hour >= 12 && hour < 18;
+        return task.status === "done" && hour >= 12 && hour < 18;
       }).length,
     },
     {
       label: "6 PM - 12 AM",
       count: statsTasks.filter(
-        (task) => new Date(task.createdAt).getHours() >= 18,
+        (task) => task.status === "done" && new Date(task.createdAt).getHours() >= 18,
       ).length,
     },
   ];
