@@ -53,6 +53,19 @@ export default function StatisticsScreen() {
   const [historyViewMode, setHistoryViewMode] = useState<"weekly" | "monthly">("weekly");
   const [selectedTaskTitle, setSelectedTaskTitle] = useState<string | undefined>(undefined);
   const [isTaskSelectorVisible, setIsTaskSelectorVisible] = useState(false);
+  const [snapshotDate, setSnapshotDate] = useState(new Date());
+
+  const handlePrevMonth = () => {
+    const d = new Date(snapshotDate);
+    d.setMonth(d.getMonth() - 1);
+    setSnapshotDate(d);
+  };
+
+  const handleNextMonth = () => {
+    const d = new Date(snapshotDate);
+    d.setMonth(d.getMonth() + 1);
+    setSnapshotDate(d);
+  };
 
   const statsTasks = useMemo(() => {
     if (!statsResetAt) {
@@ -329,8 +342,7 @@ export default function StatisticsScreen() {
     if (!currentSelectedTaskIdentity) return [];
     const [title, categoryId] = currentSelectedTaskIdentity.split("|");
     
-    const now = new Date();
-    const grid = getMonthGrid(now, firstDayOfWeek);
+    const grid = getMonthGrid(snapshotDate, firstDayOfWeek);
     
     return grid.map((cell: any) => {
        const d = cell.date;
@@ -345,7 +357,7 @@ export default function StatisticsScreen() {
          isCurrentMonth: cell.inCurrentMonth 
        };
     });
-  }, [currentSelectedTaskIdentity, taskHistory, firstDayOfWeek]);
+  }, [currentSelectedTaskIdentity, taskHistory, firstDayOfWeek, snapshotDate]);
 
   return (
     <View
@@ -441,9 +453,24 @@ export default function StatisticsScreen() {
         <View style={[styles.chartCard, { backgroundColor: colors.surfaceElevated, borderColor: colors.border, marginBottom: 20 }]}>
           <View style={styles.historyHeader}>
             <Text style={[styles.chartTitle, { color: colors.text, marginBottom: 0 }]}>Snap Shot</Text>
-            <Text style={{ color: colors.textMuted, fontSize: 12, fontFamily: AppFonts.medium }}>
-              {new Date().toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}
-            </Text>
+            
+            <View style={styles.navRow}>
+              <Pressable onPress={handlePrevMonth} style={styles.navBtn}>
+                <Ionicons name="chevron-back" size={16} color={colors.textSoft} />
+              </Pressable>
+              
+              <Text style={{ color: colors.textMuted, fontSize: 13, fontFamily: AppFonts.bold, minWidth: 100, textAlign: 'center' }}>
+                {snapshotDate.toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}
+              </Text>
+
+              <Pressable 
+                onPress={handleNextMonth} 
+                style={[styles.navBtn, snapshotDate.getMonth() === new Date().getMonth() && snapshotDate.getFullYear() === new Date().getFullYear() && { opacity: 0.3 }]}
+                disabled={snapshotDate.getMonth() === new Date().getMonth() && snapshotDate.getFullYear() === new Date().getFullYear()}
+              >
+                <Ionicons name="chevron-forward" size={16} color={colors.textSoft} />
+              </Pressable>
+            </View>
           </View>
           
           <View style={[styles.snapshotGridWrapper, { marginTop: 16 }]}>
@@ -841,5 +868,13 @@ const styles = StyleSheet.create({
     fontSize: 11,
     marginTop: 8,
     textAlign: "center",
+  },
+  navRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  navBtn: {
+    padding: 4,
   },
 });
