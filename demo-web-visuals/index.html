@@ -5,325 +5,373 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
 <title>Viewdue – Task Manager Demo</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Inconsolata:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
 <style>
-  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-  :root{
-    --bg:#0F1117;
-    --surface:#1A1D27;
-    --surface2:#22263A;
-    --border:#2A2D3E;
-    --text:#F8FAFC;
-    --text2:#94A3B8;
-    --text3:#64748B;
-    --accent:#8B7CF6;
-    --accent-dim:rgba(139,124,246,0.15);
-    --green:#10B981;
-    --red:#F43F5E;
-    --yellow:#F59E0B;
-    --blue:#3B82F6;
-    --orange:#F97316;
-    --pink:#EC4899;
-    --radius:18px;
-    --tab-h:68px;
-  }
-  html,body{height:100%;background:#070B14;font-family:'Inter',sans-serif;color:var(--text);}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0D0D0F;
+  --bg2:#131316;
+  --surface:#1C1C1F;
+  --surface2:#252529;
+  --border:#2A2A2E;
+  --text:#FFFFFF;
+  --text2:#A0A0B0;
+  --text3:#525260;
+  --accent:#06B6D4;
+  --accent-dim:rgba(6,182,212,0.12);
+  --green:#10B981;
+  --red:#F43F5E;
+  --yellow:#F59E0B;
+  --blue:#3B82F6;
+  --tab-h:70px;
+  --radius:16px;
+}
+html,body{height:100%;background:#07070A;font-family:'Inter',sans-serif;color:var(--text);}
 
-  /* ─── Phone shell (desktop only) ─── */
-  .shell-wrap{
-    display:flex;align-items:center;justify-content:center;
-    min-height:100vh;padding:24px;
-  }
-  .shell{
-    width:390px;height:844px;
-    background:var(--bg);border-radius:48px;
-    box-shadow:0 0 0 8px #1a1d27,0 0 0 10px #2a2d3e,0 30px 80px rgba(0,0,0,.7);
-    overflow:hidden;position:relative;display:flex;flex-direction:column;
-    flex-shrink:0;
-  }
-  /* notch */
-  .shell::before{
-    content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);
-    width:120px;height:32px;background:#070B14;border-radius:0 0 20px 20px;z-index:99;
-  }
+/* ─── Phone shell ─── */
+.shell-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px;}
+.shell{
+  width:390px;height:844px;background:var(--bg);border-radius:48px;
+  box-shadow:0 0 0 10px #111114,0 0 0 12px #222226,0 40px 90px rgba(0,0,0,.85);
+  overflow:hidden;position:relative;display:flex;flex-direction:column;flex-shrink:0;
+}
+/* notch */
+.shell::before{
+  content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:110px;height:30px;background:#07070A;border-radius:0 0 18px 18px;z-index:99;
+}
+/* status bar */
+.status-bar{
+  height:44px;display:flex;align-items:flex-end;justify-content:space-between;
+  padding:0 20px 6px;flex-shrink:0;font-size:12px;font-weight:600;color:var(--text2);
+  position:relative;z-index:10;
+}
 
-  /* ─── Full-screen mobile ─── */
-  @media(max-width:480px){
-    .shell-wrap{padding:0;background:var(--bg);}
-    .shell{width:100%;height:100dvh;border-radius:0;box-shadow:none;}
-    .shell::before{display:none;}
-  }
+@media(max-width:480px){
+  .shell-wrap{padding:0;background:var(--bg);}
+  .shell{width:100%;height:100dvh;border-radius:0;box-shadow:none;}
+  .shell::before{display:none;}
+  .status-bar{display:none;}
+  .download-btn{bottom:90px!important;}
+}
 
-  /* ─── Screen area ─── */
-  .screen-area{flex:1;overflow:hidden;position:relative;padding-top:44px;}
-  @media(max-width:480px){.screen-area{padding-top:env(safe-area-inset-top,0)}}
+/* ─── Screen area ─── */
+.screen-area{flex:1;overflow:hidden;position:relative;}
 
-  /* ─── Tabs ─── */
-  .tab-bar{
-    height:var(--tab-h);background:var(--surface);border-top:1px solid var(--border);
-    display:flex;align-items:flex-start;padding:8px 4px 0;
-    flex-shrink:0;
-  }
-  .tab-btn{
-    flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;
-    padding:6px 4px;border:none;background:none;cursor:pointer;
-    color:var(--text3);transition:.2s;border-radius:12px;
-  }
-  .tab-btn.active{color:var(--accent);}
-  .tab-btn i{font-size:22px;}
-  .tab-btn span{font-size:10px;font-weight:600;letter-spacing:.3px;}
-  .tab-dot{width:4px;height:4px;border-radius:50%;background:var(--accent);display:none;}
-  .tab-btn.active .tab-dot{display:block;}
+/* ─── Screens ─── */
+.screen{
+  display:none;position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;
+  padding:14px 14px 16px;-webkit-overflow-scrolling:touch;scrollbar-width:none;
+}
+.screen::-webkit-scrollbar{display:none;}
+.screen.active{display:block;}
+.page-title{font-size:32px;font-weight:800;margin-bottom:14px;padding-top:2px;letter-spacing:-.5px;}
 
-  /* ─── Screens common ─── */
-  .screen{
-    display:none;position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;
-    padding:16px 14px 16px;-webkit-overflow-scrolling:touch;
-    scrollbar-width:none;
-  }
-  .screen::-webkit-scrollbar{display:none;}
-  .screen.active{display:block;}
-  .page-title{font-size:28px;font-weight:800;margin-bottom:16px;padding-top:4px;}
+/* ─── Tab bar ─── */
+.tab-bar{
+  height:var(--tab-h);background:var(--surface);border-top:1px solid var(--border);
+  display:flex;align-items:flex-start;padding:8px 2px 0;flex-shrink:0;
+}
+.tab-btn{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;
+  padding:4px 2px;border:none;background:none;cursor:pointer;
+  color:var(--text3);transition:.2s;
+}
+.tab-btn.active{color:var(--accent);}
+.tab-icon{font-size:22px;line-height:1;}
+.tab-label{font-size:10px;font-weight:600;letter-spacing:.2px;}
+.tab-indicator{width:4px;height:4px;border-radius:50%;background:var(--accent);opacity:0;margin-top:2px;}
+.tab-btn.active .tab-indicator{opacity:1;}
 
-  /* ─── Search bar ─── */
-  .search-bar{
-    display:flex;align-items:center;gap:10px;
-    background:var(--surface);border:1px solid var(--border);
-    border-radius:18px;padding:12px 16px;margin-bottom:14px;
-  }
-  .search-bar i{color:var(--text3);font-size:17px;}
-  .search-bar span{color:var(--text3);font-size:15px;}
+/* ─── Search bar ─── */
+.search-bar{
+  display:flex;align-items:center;gap:10px;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:20px;padding:13px 16px;margin-bottom:12px;
+}
+.search-bar i{color:var(--text3);font-size:16px;}
+.search-bar span{color:var(--text3);font-size:15px;font-weight:500;}
 
-  /* ─── Filter pills ─── */
-  .filter-row{display:flex;gap:10px;margin-bottom:14px;align-items:center;}
-  .pill-group{display:flex;background:var(--surface);border-radius:14px;padding:4px;gap:0;flex:1;}
-  .pill{
-    flex:1;padding:7px 4px;text-align:center;font-size:12px;font-weight:700;
-    border-radius:10px;cursor:pointer;color:var(--text3);transition:.15s;border:none;background:none;
-  }
-  .pill.active{background:var(--accent);color:#fff;}
-  .sort-btn{
-    display:flex;align-items:center;gap:5px;padding:8px 12px;
-    background:var(--surface);border:1px solid var(--border);border-radius:12px;
-    font-size:12px;font-weight:600;color:var(--text2);cursor:pointer;border:none;
-  }
-  .cat-chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:14px;scrollbar-width:none;}
-  .cat-chips::-webkit-scrollbar{display:none;}
-  .cat-chip{
-    white-space:nowrap;padding:8px 14px;border-radius:14px;font-size:12px;font-weight:700;
-    border:1px solid;cursor:pointer;flex-shrink:0;transition:.15s;
-  }
+/* ─── Progress hero card ─── */
+.hero-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:20px;padding:16px;margin-bottom:12px;
+}
+.hero-top{display:flex;align-items:center;gap:14px;margin-bottom:12px;}
+.hero-icon{width:52px;height:52px;border-radius:18px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+.hero-text-wrap{flex:1;}
+.hero-title{font-size:17px;font-weight:800;}
+.hero-sub{font-size:13px;color:var(--text2);margin-top:2px;}
+.hero-pct{font-family:'Inconsolata',monospace;font-size:14px;font-weight:700;color:var(--accent);}
+.progress-bar-track{height:4px;background:var(--surface2);border-radius:4px;margin-bottom:12px;overflow:hidden;}
+.progress-bar-fill{height:100%;background:var(--accent);border-radius:4px;width:0%;}
+.hero-stats{display:flex;gap:10px;}
+.hero-stat{
+  flex:1;display:flex;align-items:center;gap:8px;
+  background:var(--surface2);border-radius:14px;padding:10px 12px;
+}
+.hero-stat i{font-size:14px;}
+.hero-stat-label{font-size:12px;font-weight:600;}
 
-  /* ─── Task cards ─── */
-  .task-card{
-    background:var(--surface);border:1px solid var(--border);border-radius:16px;
-    padding:14px 14px 14px 16px;margin-bottom:10px;
-    display:flex;align-items:flex-start;gap:12px;
-  }
-  .task-check{
-    width:22px;height:22px;border-radius:8px;border:2px solid var(--border);
-    flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;
-    transition:.15s;cursor:pointer;
-  }
-  .task-check.done{background:var(--accent);border-color:var(--accent);}
-  .task-check.done::after{content:'✓';color:#fff;font-size:12px;font-weight:800;}
-  .task-check.na{background:var(--surface2);border-color:var(--border);}
-  .task-check.na::after{content:'–';color:var(--text3);font-size:14px;font-weight:800;}
-  .task-body{flex:1;min-width:0;}
-  .task-title{font-size:15px;font-weight:600;color:var(--text);line-height:1.4;}
-  .task-title.done{text-decoration:line-through;color:var(--text3);}
-  .task-title.na{color:var(--text3);}
-  .task-desc{font-size:12px;color:var(--text3);margin-top:3px;line-height:1.4;}
-  .task-cat-badge{
-    display:inline-flex;align-items:center;gap:5px;
-    padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;
-    margin-top:6px;
-  }
-  .task-cat-dot{width:7px;height:7px;border-radius:50%;}
+/* ─── Segment tabs ─── */
+.seg-tabs{display:flex;gap:0;margin-bottom:14px;border-bottom:1px solid var(--border);}
+.seg-tab{
+  padding:8px 0;margin-right:20px;font-size:15px;font-weight:700;
+  border:none;background:none;cursor:pointer;color:var(--text3);
+  border-bottom:2px solid transparent;transition:.15s;
+}
+.seg-tab.active{color:var(--text);border-bottom-color:var(--accent);}
 
-  /* ─── FAB ─── */
-  .fab{
-    position:absolute;bottom:16px;right:16px;
-    width:56px;height:56px;border-radius:20px;
-    background:var(--accent);border:none;cursor:pointer;
-    display:flex;align-items:center;justify-content:center;
-    font-size:26px;color:#fff;box-shadow:0 6px 20px rgba(139,124,246,.45);
-    transition:.15s;z-index:10;
-  }
-  .fab:hover{transform:scale(1.06);}
+/* ─── Category cards ─── */
+.cat-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:18px;
+  padding:14px 12px 14px 14px;margin-bottom:10px;
+  display:flex;align-items:center;gap:12px;cursor:pointer;transition:.15s;
+}
+.cat-card:hover{border-color:var(--accent);background:var(--surface2);}
+/* circular progress */
+.circ-wrap{width:52px;height:52px;flex-shrink:0;position:relative;}
+.circ-wrap svg{transform:rotate(-90deg);}
+.circ-bg{fill:none;stroke:var(--surface2);stroke-width:4;}
+.circ-fill{fill:none;stroke:var(--accent);stroke-width:4;stroke-linecap:round;transition:.6s;}
+.circ-label{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-family:'Inconsolata',monospace;font-size:11px;font-weight:700;color:var(--text2);
+}
+.cat-info{flex:1;min-width:0;}
+.cat-name{font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cat-desc{font-size:12px;color:var(--text2);margin-top:2px;}
+.cat-right{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.cat-count{font-family:'Inconsolata',monospace;font-size:13px;font-weight:700;color:var(--text2);}
+.cat-archive-btn{
+  width:32px;height:32px;border-radius:10px;border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--text3);
+  cursor:pointer;background:var(--surface2);
+}
 
-  /* ─── Categories screen ─── */
-  .cat-card{
-    background:var(--surface);border:1px solid var(--border);border-radius:20px;
-    padding:16px;margin-bottom:10px;display:flex;align-items:center;gap:14px;
-    cursor:pointer;transition:.15s;
-  }
-  .cat-icon-wrap{
-    width:44px;height:44px;border-radius:16px;display:flex;align-items:center;
-    justify-content:center;flex-shrink:0;font-size:20px;
-  }
-  .cat-info{flex:1;min-width:0;}
-  .cat-name{font-size:15px;font-weight:700;}
-  .cat-desc{font-size:12px;color:var(--text3);margin-top:2px;}
-  .cat-count{font-size:12px;font-weight:600;color:var(--text3);}
-  .cat-chevron{color:var(--text3);font-size:14px;}
+/* ─── FAB ─── */
+.fab{
+  position:absolute;bottom:14px;right:14px;
+  width:58px;height:58px;border-radius:20px;
+  background:var(--accent);border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  font-size:28px;color:#fff;
+  box-shadow:0 8px 24px rgba(6,182,212,.45);
+  transition:.15s;z-index:10;font-weight:300;line-height:1;
+}
+.fab:hover{transform:scale(1.06);}
 
-  /* ─── Calendar screen ─── */
-  .cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
-  .cal-nav{background:var(--surface);border:1px solid var(--border);border-radius:10px;
-    width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;border:none;color:var(--text2);}
-  .cal-month{font-size:17px;font-weight:700;}
-  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:16px;}
-  .cal-dow{text-align:center;font-size:11px;font-weight:600;color:var(--text3);padding:4px 0;}
-  .cal-day{
-    aspect-ratio:1;display:flex;align-items:center;justify-content:center;
-    font-size:13px;font-weight:500;border-radius:10px;cursor:pointer;
-    color:var(--text2);transition:.15s;position:relative;
-  }
-  .cal-day.today{background:var(--accent);color:#fff;font-weight:700;}
-  .cal-day.has-event::after{
-    content:'';position:absolute;bottom:3px;left:50%;transform:translateX(-50%);
-    width:4px;height:4px;border-radius:50%;background:var(--accent);
-  }
-  .cal-day.today.has-event::after{background:#fff;}
-  .cal-day.other-month{color:var(--text3);opacity:.4;}
-  .event-list{margin-top:4px;}
-  .event-item{
-    background:var(--surface);border:1px solid var(--border);border-radius:14px;
-    padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px;
-  }
-  .event-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
-  .event-info{flex:1;}
-  .event-title{font-size:14px;font-weight:600;}
-  .event-time{font-size:11px;color:var(--text3);margin-top:2px;}
+/* ─── Todos screen ─── */
+.filter-row{display:flex;gap:8px;margin-bottom:12px;align-items:center;}
+.pill-group{display:flex;background:var(--surface);border-radius:14px;padding:4px;flex:1;}
+.pill{
+  flex:1;padding:7px 4px;text-align:center;font-size:12px;font-weight:700;
+  border-radius:10px;cursor:pointer;color:var(--text3);border:none;background:none;transition:.15s;
+}
+.pill.active{background:var(--accent);color:#fff;}
+.sort-btn{
+  display:flex;align-items:center;gap:5px;padding:8px 12px;
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  font-size:12px;font-weight:600;color:var(--text2);cursor:pointer;border:none;flex-shrink:0;
+}
+.cat-chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:12px;scrollbar-width:none;}
+.cat-chips::-webkit-scrollbar{display:none;}
+.cat-chip{
+  white-space:nowrap;padding:8px 14px;border-radius:14px;font-size:12px;font-weight:700;
+  border:1px solid;cursor:pointer;flex-shrink:0;transition:.15s;
+}
+.task-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:16px;
+  padding:12px 14px;margin-bottom:10px;display:flex;align-items:flex-start;gap:12px;
+}
+.task-check{
+  width:22px;height:22px;border-radius:8px;border:2px solid var(--border);
+  flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:.15s;
+}
+.task-check.done{background:var(--accent);border-color:var(--accent);}
+.task-check.done::after{content:'✓';color:#fff;font-size:12px;font-weight:800;}
+.task-check.na::after{content:'–';color:var(--text3);font-size:14px;font-weight:800;}
+.task-body{flex:1;min-width:0;}
+.task-title{font-size:15px;font-weight:600;line-height:1.4;}
+.task-title.done{text-decoration:line-through;color:var(--text3);}
+.task-title.na{color:var(--text3);}
+.task-desc{font-size:12px;color:var(--text3);margin-top:3px;}
+.task-cat-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;margin-top:6px;}
+.task-cat-dot{width:7px;height:7px;border-radius:50%;}
 
-  /* ─── Stats screen ─── */
-  .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
-  .stat-box{
-    background:var(--surface);border:1px solid var(--border);border-radius:18px;
-    padding:14px;
-  }
-  .stat-icon-wrap{
-    width:32px;height:32px;border-radius:10px;display:flex;align-items:center;
-    justify-content:center;margin-bottom:8px;font-size:15px;
-  }
-  .stat-val{font-size:26px;font-weight:800;line-height:1;}
-  .stat-lbl{font-size:12px;color:var(--text3);margin-top:3px;font-weight:500;}
-  .section-title-sm{font-size:18px;font-weight:700;margin-bottom:10px;}
-  .chart-card{
-    background:var(--surface);border:1px solid var(--border);border-radius:18px;
-    padding:16px;margin-bottom:14px;
-  }
-  .chart-title{font-size:14px;font-weight:700;margin-bottom:14px;color:var(--text2);}
-  .bar-chart{display:flex;align-items:flex-end;gap:6px;height:80px;}
-  .bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;}
-  .bar-track{
-    width:16px;height:60px;background:var(--surface2);border-radius:6px;
-    overflow:hidden;display:flex;align-items:flex-end;
-  }
-  .bar-fill{width:100%;background:var(--accent);border-radius:6px;}
-  .bar-lbl{font-size:9px;color:var(--text3);font-weight:600;}
-  .heatmap{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-top:8px;}
-  .heat-cell{
-    aspect-ratio:1;border-radius:4px;background:var(--surface2);transition:.2s;
-  }
-  .heat-cell.l1{background:rgba(139,124,246,.25);}
-  .heat-cell.l2{background:rgba(139,124,246,.55);}
-  .heat-cell.l3{background:rgba(139,124,246,.85);}
-  .heat-cell.l4{background:var(--accent);}
-  .period-toggle{display:flex;background:var(--surface2);border-radius:12px;padding:3px;gap:0;}
-  .period-btn{
-    flex:1;padding:6px 0;text-align:center;font-size:11px;font-weight:700;
-    border-radius:9px;cursor:pointer;color:var(--text3);border:none;background:none;transition:.15s;
-  }
-  .period-btn.active{background:var(--surface);color:var(--text);}
-  .streak-row{display:flex;gap:10px;margin-bottom:16px;}
-  .streak-card{
-    flex:1;background:var(--surface2);border-radius:14px;padding:12px 14px;
-    display:flex;align-items:center;gap:8px;
-  }
-  .streak-card i{color:var(--accent);font-size:16px;}
-  .streak-val{font-size:14px;font-weight:700;}
+/* ─── Calendar ─── */
+.cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.cal-nav{background:var(--surface);border:1px solid var(--border);border-radius:10px;
+  width:32px;height:32px;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;color:var(--text2);font-size:12px;}
+.cal-month{font-size:16px;font-weight:700;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:14px;}
+.cal-dow{text-align:center;font-size:11px;font-weight:600;color:var(--text3);padding:4px 0;}
+.cal-day{
+  aspect-ratio:1;display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:500;border-radius:10px;cursor:pointer;color:var(--text2);position:relative;
+}
+.cal-day.today{background:var(--accent);color:#fff;font-weight:700;}
+.cal-day.has-dot::after{
+  content:'';position:absolute;bottom:3px;left:50%;transform:translateX(-50%);
+  width:4px;height:4px;border-radius:50%;background:var(--accent);
+}
+.cal-day.today.has-dot::after{background:#fff;}
+.cal-day.dim{opacity:.35;}
+.event-item{
+  background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px;
+}
+.event-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.event-title{font-size:14px;font-weight:600;}
+.event-time{font-size:11px;color:var(--text3);margin-top:2px;}
 
-  /* ─── Settings screen ─── */
-  .settings-section{margin-bottom:18px;}
-  .settings-section-title{font-size:13px;font-weight:700;color:var(--accent);
-    text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;}
-  .settings-card{
-    background:var(--surface);border:1px solid var(--border);border-radius:22px;overflow:hidden;
-  }
-  .settings-row{
-    display:flex;align-items:center;justify-content:space-between;
-    padding:0 16px;min-height:68px;gap:10px;
-  }
-  .settings-row+.settings-row{border-top:1px solid var(--border);}
-  .settings-row-left{display:flex;align-items:center;gap:12px;flex:1;min-width:0;}
-  .settings-icon{
-    width:38px;height:38px;border-radius:13px;display:flex;align-items:center;
-    justify-content:center;font-size:17px;flex-shrink:0;
-  }
-  .settings-label{font-size:15px;font-weight:600;}
-  .settings-row-right{display:flex;align-items:center;gap:8px;color:var(--text3);flex-shrink:0;}
-  .settings-value{font-size:14px;font-weight:500;}
-  .toggle{
-    width:50px;height:28px;background:#3F3F46;border-radius:14px;position:relative;cursor:pointer;
-  }
-  .toggle.on{background:var(--accent);}
-  .toggle-knob{
-    position:absolute;top:3px;left:3px;width:22px;height:22px;
-    background:#fff;border-radius:50%;transition:.2s;
-  }
-  .toggle.on .toggle-knob{transform:translateX(22px);}
-  .color-dot{width:20px;height:20px;border-radius:8px;}
-  .settings-row.danger .settings-label{color:var(--red);}
-  .settings-row.danger .settings-icon{background:rgba(244,63,94,.1);}
-  .settings-row.danger .settings-icon i{color:var(--red);}
-  .settings-row.danger .settings-row-right{color:rgba(244,63,94,.6);}
+/* ─── Stats ─── */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+.stat-box{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:14px;}
+.stat-icon-wrap{width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:8px;font-size:14px;}
+.stat-val{font-size:26px;font-weight:800;font-family:'Inconsolata',monospace;line-height:1;}
+.stat-lbl{font-size:12px;color:var(--text3);margin-top:3px;font-weight:500;}
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:14px;margin-bottom:14px;}
+.chart-title{font-size:13px;font-weight:700;margin-bottom:12px;color:var(--text2);}
+.bar-chart{display:flex;align-items:flex-end;gap:6px;height:80px;}
+.bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;}
+.bar-track{width:16px;height:60px;background:var(--surface2);border-radius:6px;overflow:hidden;display:flex;align-items:flex-end;}
+.bar-fill{width:100%;background:var(--accent);border-radius:6px;}
+.bar-lbl{font-size:9px;color:var(--text3);font-weight:600;}
+.heatmap{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-top:8px;}
+.heat-cell{aspect-ratio:1;border-radius:4px;background:var(--surface2);}
+.heat-cell.l1{background:rgba(6,182,212,.2);}
+.heat-cell.l2{background:rgba(6,182,212,.45);}
+.heat-cell.l3{background:rgba(6,182,212,.75);}
+.heat-cell.l4{background:var(--accent);}
+.period-toggle{display:flex;background:var(--surface2);border-radius:12px;padding:3px;}
+.period-btn{flex:1;padding:6px 0;text-align:center;font-size:11px;font-weight:700;border-radius:9px;cursor:pointer;color:var(--text3);border:none;background:none;transition:.15s;}
+.period-btn.active{background:var(--surface);color:var(--text);}
+.streak-row{display:flex;gap:10px;margin-bottom:14px;}
+.streak-card{flex:1;background:var(--surface2);border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:8px;}
+.streak-val{font-size:13px;font-weight:700;}
+.section-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.section-title-sm{font-size:17px;font-weight:700;}
+.task-sel{flex:1;display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--surface);border:1px solid var(--border);border-radius:14px;cursor:pointer;font-size:13px;font-weight:700;overflow:hidden;}
+.task-sel-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.task-sel-name{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
-  /* ─── Empty state ─── */
-  .empty{display:flex;flex-direction:column;align-items:center;justify-content:center;
-    padding:48px 24px;color:var(--text3);}
-  .empty i{font-size:48px;margin-bottom:14px;opacity:.3;}
-  .empty-title{font-size:17px;font-weight:700;color:var(--text2);margin-bottom:6px;}
-  .empty-desc{font-size:13px;text-align:center;line-height:1.5;}
+/* ─── Settings ─── */
+.settings-section{margin-bottom:18px;}
+.settings-section-title{font-size:12px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;}
+.settings-card{background:var(--surface);border:1px solid var(--border);border-radius:22px;overflow:hidden;}
+.settings-row{display:flex;align-items:center;justify-content:space-between;padding:0 16px;min-height:68px;gap:10px;}
+.settings-row+.settings-row{border-top:1px solid var(--border);}
+.settings-row-left{display:flex;align-items:center;gap:12px;flex:1;min-width:0;}
+.settings-icon{width:38px;height:38px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.settings-label{font-size:15px;font-weight:600;}
+.settings-row-right{display:flex;align-items:center;gap:8px;color:var(--text3);flex-shrink:0;}
+.settings-value{font-size:14px;font-weight:500;}
+.toggle{width:50px;height:28px;background:#3F3F46;border-radius:14px;position:relative;cursor:pointer;flex-shrink:0;}
+.toggle.on{background:var(--accent);}
+.toggle-knob{position:absolute;top:3px;left:3px;width:22px;height:22px;background:#fff;border-radius:50%;transition:.2s;}
+.toggle.on .toggle-knob{transform:translateX(22px);}
+.color-dot{width:20px;height:20px;border-radius:8px;}
+.danger .settings-label{color:var(--red);}
+.danger .settings-icon{background:rgba(244,63,94,.1);}
+.danger .settings-icon i{color:var(--red);}
+.danger .settings-row-right{color:rgba(244,63,94,.5);}
 
-  /* ─── Section header with toggle ─── */
-  .section-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+/* ─── Empty ─── */
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 24px;color:var(--text3);}
+.empty i{font-size:48px;margin-bottom:14px;opacity:.25;}
+.empty-title{font-size:16px;font-weight:700;color:var(--text2);margin-bottom:6px;}
+.empty-desc{font-size:12px;text-align:center;line-height:1.5;}
 
-  /* ─── Task selector pill ─── */
-  .task-sel{
-    flex:1;display:flex;align-items:center;gap:8px;padding:9px 12px;
-    background:var(--surface);border:1px solid var(--border);border-radius:14px;cursor:pointer;
-    font-size:13px;font-weight:700;overflow:hidden;
+/* ─── Download APK button ─── */
+.download-btn{
+  position:fixed;bottom:30px;right:30px;
+  display:flex;align-items:center;gap:10px;
+  background:linear-gradient(135deg,#0ea5e9,#06B6D4);
+  color:#fff;border:none;border-radius:16px;
+  padding:12px 18px;cursor:pointer;
+  box-shadow:0 8px 32px rgba(6,182,212,.55);
+  font-family:'Inter',sans-serif;font-size:13px;font-weight:700;
+  text-decoration:none;z-index:999;transition:.2s;
+  backdrop-filter:blur(8px);
+}
+.download-btn:hover{transform:translateY(-2px);box-shadow:0 12px 40px rgba(6,182,212,.7);}
+.download-btn i{font-size:16px;}
+@media(max-width:480px){
+  .download-btn{
+    bottom:82px;right:14px;padding:10px 14px;font-size:12px;border-radius:14px;
   }
-  .task-sel-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
-  .task-sel-name{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-
-  /* ─── Mini dot ─── */
-  .vdot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
-
-  /* scrollable hint on desktop */
-  @media(min-width:481px){
-    .shell-hint{
-      position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
-      font-size:12px;color:rgba(255,255,255,.3);pointer-events:none;
-      font-family:'Inter',sans-serif;
-    }
-  }
-  @media(max-width:480px){.shell-hint{display:none;}}
+}
 </style>
 </head>
 <body>
 
+<!-- ─── Download APK floating button ─── -->
+<a class="download-btn" href="https://github.com/estiyakho/VIEWDUE/releases/latest" target="_blank" rel="noopener">
+  <i class="fa-solid fa-download"></i>
+  Download APK
+</a>
+
 <div class="shell-wrap">
   <div class="shell">
 
-    <!-- ===== SCREEN AREA ===== -->
+    <!-- status bar sim -->
+    <div class="status-bar">
+      <span>1:44</span>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <i class="fa-solid fa-wifi" style="font-size:13px;"></i>
+        <i class="fa-solid fa-signal" style="font-size:13px;"></i>
+        <span>86%</span>
+        <i class="fa-solid fa-battery-full" style="font-size:13px;color:var(--green);"></i>
+      </div>
+    </div>
+
+    <!-- ═══════ SCREEN AREA ═══════ -->
     <div class="screen-area">
 
-      <!-- ── TODOS ── -->
-      <div class="screen active" id="screen-todos">
+      <!-- ── CATEGORIES (default) ── -->
+      <div class="screen active" id="screen-categories">
+        <div class="search-bar"><i class="fa-solid fa-magnifying-glass"></i><span>Search Category</span></div>
+
+        <!-- progress hero -->
+        <div class="hero-card">
+          <div class="hero-top">
+            <div class="hero-icon">🚩</div>
+            <div class="hero-text-wrap">
+              <div class="hero-title">Let's start!</div>
+              <div class="hero-sub">All Todos progress</div>
+            </div>
+            <div class="hero-pct">0%</div>
+          </div>
+          <div class="progress-bar-track"><div class="progress-bar-fill" style="width:0%"></div></div>
+          <div class="hero-stats">
+            <div class="hero-stat" style="color:var(--accent);">
+              <i class="fa-solid fa-circle-check"></i>
+              <span class="hero-stat-label">0 Completed</span>
+            </div>
+            <div class="hero-stat" style="color:var(--yellow);">
+              <i class="fa-solid fa-list"></i>
+              <span class="hero-stat-label">21 Remaining</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- segment tabs -->
+        <div class="seg-tabs">
+          <button class="seg-tab active" onclick="showSeg('active',this)">Active</button>
+          <button class="seg-tab" onclick="showSeg('archived',this)">Archived</button>
+        </div>
+
+        <div id="cat-active-list"></div>
+        <div id="cat-archived-list" style="display:none;"></div>
+
+        <button class="fab">+</button>
+      </div>
+
+      <!-- ── ALL TODOS ── -->
+      <div class="screen" id="screen-todos">
         <div class="search-bar"><i class="fa-solid fa-magnifying-glass"></i><span>Search Todo</span></div>
         <div class="filter-row">
           <div class="pill-group">
@@ -335,25 +383,18 @@
         </div>
         <div class="cat-chips" id="todo-cat-chips">
           <div class="cat-chip active" style="background:var(--accent);border-color:var(--accent);color:#fff;" onclick="filterCat('all',this)">All</div>
-          <div class="cat-chip" style="border-color:var(--border);color:var(--text2);" data-cat="work" onclick="filterCat('work',this)">Work</div>
-          <div class="cat-chip" style="border-color:var(--border);color:var(--text2);" data-cat="personal" onclick="filterCat('personal',this)">Personal</div>
-          <div class="cat-chip" style="border-color:var(--border);color:var(--text2);" data-cat="health" onclick="filterCat('health',this)">Health</div>
-          <div class="cat-chip" style="border-color:var(--border);color:var(--text2);" data-cat="learning" onclick="filterCat('learning',this)">Learning</div>
+          <div class="cat-chip" style="border-color:var(--border);color:var(--text2);" data-cat="study-morning" onclick="filterCat('study-morning',this)">Study Morning</div>
+          <div class="cat-chip" style="border-color:var(--border);color:var(--text2);" data-cat="tuition" onclick="filterCat('tuition',this)">Tuition</div>
+          <div class="cat-chip" style="border-color:var(--border);color:var(--text2);" data-cat="study-evening" onclick="filterCat('study-evening',this)">Study Evening</div>
+          <div class="cat-chip" style="border-color:var(--border);color:var(--text2);" data-cat="habit" onclick="filterCat('habit',this)">Habit</div>
         </div>
         <div id="todo-list"></div>
-        <button class="fab" title="Add task">+</button>
-      </div>
-
-      <!-- ── CATEGORIES ── -->
-      <div class="screen" id="screen-categories">
-        <div class="page-title">Categories</div>
-        <div class="search-bar"><i class="fa-solid fa-magnifying-glass"></i><span>Search Category</span></div>
-        <div id="cat-list"></div>
-        <button class="fab" title="Add category">+</button>
+        <button class="fab">+</button>
       </div>
 
       <!-- ── CALENDAR ── -->
       <div class="screen" id="screen-calendar">
+        <div class="page-title">Calendar</div>
         <div class="cal-header">
           <button class="cal-nav" onclick="shiftMonth(-1)"><i class="fa-solid fa-chevron-left"></i></button>
           <span class="cal-month" id="cal-month-label"></span>
@@ -361,20 +402,19 @@
         </div>
         <div class="cal-grid" id="cal-grid"></div>
         <div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:10px;">Scheduled</div>
-        <div class="event-list" id="event-list"></div>
-        <button class="fab" title="Add event">+</button>
+        <div id="event-list"></div>
+        <button class="fab">+</button>
       </div>
 
       <!-- ── STATISTICS ── -->
       <div class="screen" id="screen-statistics">
         <div class="page-title">Statistics</div>
 
-        <!-- task selector -->
-        <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px;">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;">
           <div class="task-sel">
             <div class="task-sel-dot" style="background:var(--accent);"></div>
             <span class="task-sel-name">Morning Jog</span>
-            <i class="fa-solid fa-chevron-down" style="font-size:12px;color:var(--text3);"></i>
+            <i class="fa-solid fa-chevron-down" style="font-size:11px;color:var(--text3);"></i>
           </div>
           <div class="period-toggle" style="width:64px;">
             <button class="period-btn active">W</button>
@@ -382,36 +422,32 @@
           </div>
         </div>
 
-        <!-- week bar chart -->
         <div class="chart-card">
           <div class="chart-title">Week View</div>
           <div class="bar-chart" id="week-bars"></div>
         </div>
 
-        <!-- heatmap snapshot -->
-        <div class="chart-card" style="margin-bottom:16px;">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <div class="chart-card" style="margin-bottom:14px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
             <div class="chart-title" style="margin-bottom:0;">Snap Shot</div>
-            <div style="display:flex;align-items:center;gap:8px;">
-              <button class="cal-nav"><i class="fa-solid fa-chevron-left"></i></button>
-              <span style="font-size:12px;font-weight:700;color:var(--text3);" id="heat-month"></span>
-              <button class="cal-nav"><i class="fa-solid fa-chevron-right"></i></button>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <button class="cal-nav" style="width:26px;height:26px;font-size:10px;"><i class="fa-solid fa-chevron-left"></i></button>
+              <span style="font-size:11px;font-weight:700;color:var(--text3);" id="heat-month"></span>
+              <button class="cal-nav" style="width:26px;height:26px;font-size:10px;"><i class="fa-solid fa-chevron-right"></i></button>
             </div>
           </div>
-          <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px;" id="dow-labels"></div>
+          <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:3px;" id="dow-labels"></div>
           <div class="heatmap" id="heatmap"></div>
         </div>
 
-        <!-- streak -->
-        <div class="section-title-sm" style="margin-bottom:10px;">Task Streak</div>
+        <div style="margin-bottom:10px;"><div class="section-title-sm">Task Streak</div></div>
         <div class="streak-row">
-          <div class="streak-card"><i class="fa-solid fa-bolt"></i><span class="streak-val">7 Current</span></div>
-          <div class="streak-card"><i class="fa-solid fa-trophy"></i><span class="streak-val">14 Longest</span></div>
+          <div class="streak-card"><i class="fa-solid fa-bolt" style="color:var(--accent);font-size:14px;"></i><span class="streak-val">7 Current</span></div>
+          <div class="streak-card"><i class="fa-solid fa-trophy" style="color:var(--accent);font-size:14px;"></i><span class="streak-val">14 Longest</span></div>
         </div>
 
-        <!-- overview -->
         <div class="section-hdr">
-          <div class="section-title-sm" style="margin-bottom:0;">Task Overview</div>
+          <div class="section-title-sm">Task Overview</div>
           <div class="period-toggle">
             <button class="period-btn active" onclick="setPeriod('today',this)">Today</button>
             <button class="period-btn" onclick="setPeriod('week',this)">Week</button>
@@ -420,13 +456,11 @@
         </div>
         <div class="stats-grid" id="stats-grid"></div>
 
-        <!-- weekly activity -->
         <div class="chart-card">
           <div class="chart-title">Weekly Activity</div>
           <div class="bar-chart" id="weekly-bars"></div>
         </div>
 
-        <!-- hourly heatmap -->
         <div class="chart-card">
           <div class="chart-title">Hourly Activity</div>
           <div class="heatmap" id="hourly-heatmap" style="grid-template-columns:repeat(8,1fr);"></div>
@@ -442,51 +476,33 @@
           <div class="settings-section-title">Appearance</div>
           <div class="settings-card">
             <div class="settings-row">
-              <div class="settings-row-left">
-                <div class="settings-icon" style="background:rgba(139,124,246,.15);"><i class="fa-solid fa-sun" style="color:var(--accent);"></i></div>
-                <span class="settings-label">Theme</span>
-              </div>
+              <div class="settings-row-left"><div class="settings-icon" style="background:var(--accent-dim);"><i class="fa-solid fa-sun" style="color:var(--accent);"></i></div><span class="settings-label">Theme</span></div>
               <div class="settings-row-right"><span class="settings-value">Dark</span><i class="fa-solid fa-chevron-right"></i></div>
             </div>
             <div class="settings-row">
-              <div class="settings-row-left">
-                <div class="settings-icon" style="background:rgba(139,124,246,.15);"><i class="fa-solid fa-mobile-screen" style="color:var(--accent);"></i></div>
-                <span class="settings-label">AMOLED Theme</span>
-              </div>
+              <div class="settings-row-left"><div class="settings-icon" style="background:var(--accent-dim);"><i class="fa-solid fa-mobile-screen" style="color:var(--accent);"></i></div><span class="settings-label">AMOLED Theme</span></div>
               <div class="toggle" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div>
             </div>
             <div class="settings-row">
-              <div class="settings-row-left">
-                <div class="settings-icon" style="background:rgba(139,124,246,.15);"><i class="fa-solid fa-palette" style="color:var(--accent);"></i></div>
-                <span class="settings-label">Accent Color</span>
-              </div>
+              <div class="settings-row-left"><div class="settings-icon" style="background:var(--accent-dim);"><i class="fa-solid fa-palette" style="color:var(--accent);"></i></div><span class="settings-label">Accent Color</span></div>
               <div class="settings-row-right"><div class="color-dot" style="background:var(--accent);"></div><i class="fa-solid fa-chevron-right"></i></div>
             </div>
           </div>
         </div>
 
         <div class="settings-section">
-          <div class="settings-section-title">Date & Time</div>
+          <div class="settings-section-title">Date &amp; Time</div>
           <div class="settings-card">
             <div class="settings-row">
-              <div class="settings-row-left">
-                <div class="settings-icon" style="background:rgba(139,124,246,.15);"><i class="fa-regular fa-clock" style="color:var(--accent);"></i></div>
-                <span class="settings-label">Time Format</span>
-              </div>
+              <div class="settings-row-left"><div class="settings-icon" style="background:var(--accent-dim);"><i class="fa-regular fa-clock" style="color:var(--accent);"></i></div><span class="settings-label">Time Format</span></div>
               <div class="settings-row-right"><span class="settings-value">12-Hour</span><i class="fa-solid fa-chevron-right"></i></div>
             </div>
             <div class="settings-row">
-              <div class="settings-row-left">
-                <div class="settings-icon" style="background:rgba(139,124,246,.15);"><i class="fa-regular fa-calendar" style="color:var(--accent);"></i></div>
-                <span class="settings-label">First Day of Week</span>
-              </div>
+              <div class="settings-row-left"><div class="settings-icon" style="background:var(--accent-dim);"><i class="fa-regular fa-calendar" style="color:var(--accent);"></i></div><span class="settings-label">First Day of Week</span></div>
               <div class="settings-row-right"><span class="settings-value">Saturday</span><i class="fa-solid fa-chevron-right"></i></div>
             </div>
             <div class="settings-row">
-              <div class="settings-row-left">
-                <div class="settings-icon" style="background:rgba(139,124,246,.15);"><i class="fa-solid fa-bell" style="color:var(--accent);"></i></div>
-                <span class="settings-label">Snooze Duration</span>
-              </div>
+              <div class="settings-row-left"><div class="settings-icon" style="background:var(--accent-dim);"><i class="fa-solid fa-bell" style="color:var(--accent);"></i></div><span class="settings-label">Snooze Duration</span></div>
               <div class="settings-row-right"><span class="settings-value">10 min</span><i class="fa-solid fa-chevron-right"></i></div>
             </div>
           </div>
@@ -496,17 +512,11 @@
           <div class="settings-section-title">App Preferences</div>
           <div class="settings-card">
             <div class="settings-row">
-              <div class="settings-row-left">
-                <div class="settings-icon" style="background:rgba(139,124,246,.15);"><i class="fa-solid fa-layer-group" style="color:var(--accent);"></i></div>
-                <span class="settings-label">Default Screen</span>
-              </div>
+              <div class="settings-row-left"><div class="settings-icon" style="background:var(--accent-dim);"><i class="fa-solid fa-layer-group" style="color:var(--accent);"></i></div><span class="settings-label">Default Screen</span></div>
               <div class="settings-row-right"><span class="settings-value">All Todos</span><i class="fa-solid fa-chevron-right"></i></div>
             </div>
             <div class="settings-row">
-              <div class="settings-row-left">
-                <div class="settings-icon" style="background:rgba(139,124,246,.15);"><i class="fa-solid fa-language" style="color:var(--accent);"></i></div>
-                <span class="settings-label">Language</span>
-              </div>
+              <div class="settings-row-left"><div class="settings-icon" style="background:var(--accent-dim);"><i class="fa-solid fa-language" style="color:var(--accent);"></i></div><span class="settings-label">Language</span></div>
               <div class="settings-row-right"><span class="settings-value">English</span><i class="fa-solid fa-chevron-right"></i></div>
             </div>
           </div>
@@ -516,96 +526,144 @@
           <div class="settings-section-title">Data Management</div>
           <div class="settings-card">
             <div class="settings-row">
-              <div class="settings-row-left">
-                <div class="settings-icon" style="background:rgba(139,124,246,.15);"><i class="fa-solid fa-rotate" style="color:var(--accent);"></i></div>
-                <span class="settings-label">Reset Interval</span>
-              </div>
+              <div class="settings-row-left"><div class="settings-icon" style="background:var(--accent-dim);"><i class="fa-solid fa-rotate" style="color:var(--accent);"></i></div><span class="settings-label">Reset Interval</span></div>
               <div class="settings-row-right"><span class="settings-value">Daily</span><i class="fa-solid fa-chevron-right"></i></div>
             </div>
             <div class="settings-row">
-              <div class="settings-row-left">
-                <div class="settings-icon" style="background:rgba(139,124,246,.15);"><i class="fa-solid fa-box-archive" style="color:var(--accent);"></i></div>
-                <span class="settings-label">Stored Items</span>
-              </div>
-              <div class="settings-row-right"><span class="settings-value">11</span><i class="fa-solid fa-chevron-right"></i></div>
+              <div class="settings-row-left"><div class="settings-icon" style="background:var(--accent-dim);"><i class="fa-solid fa-box-archive" style="color:var(--accent);"></i></div><span class="settings-label">Stored Items</span></div>
+              <div class="settings-row-right"><span class="settings-value">21</span><i class="fa-solid fa-chevron-right"></i></div>
             </div>
             <div class="settings-row danger">
-              <div class="settings-row-left">
-                <div class="settings-icon"><i class="fa-solid fa-trash"></i></div>
-                <span class="settings-label">Reset Now</span>
-              </div>
+              <div class="settings-row-left"><div class="settings-icon"><i class="fa-solid fa-trash"></i></div><span class="settings-label">Reset Now</span></div>
               <div class="settings-row-right"><i class="fa-solid fa-chevron-right"></i></div>
             </div>
           </div>
         </div>
+        <div style="height:20px;"></div>
       </div>
 
     </div><!-- /screen-area -->
 
-    <!-- ===== TAB BAR ===== -->
+    <!-- ═══════ TAB BAR ═══════ -->
     <div class="tab-bar">
-      <button class="tab-btn" onclick="switchTab('categories')"><i class="fa-solid fa-folder"></i><span>Categories</span><div class="tab-dot"></div></button>
-      <button class="tab-btn active" onclick="switchTab('todos')"><i class="fa-solid fa-list-check"></i><span>Todos</span><div class="tab-dot"></div></button>
-      <button class="tab-btn" onclick="switchTab('calendar')"><i class="fa-regular fa-calendar"></i><span>Calendar</span><div class="tab-dot"></div></button>
-      <button class="tab-btn" onclick="switchTab('statistics')"><i class="fa-solid fa-chart-bar"></i><span>Stats</span><div class="tab-dot"></div></button>
-      <button class="tab-btn" onclick="switchTab('settings')"><i class="fa-solid fa-gear"></i><span>Settings</span><div class="tab-dot"></div></button>
+      <button class="tab-btn active" onclick="switchTab('categories')">
+        <div class="tab-icon"><i class="fa-solid fa-folder-open"></i></div>
+        <span class="tab-label">Categories</span>
+        <div class="tab-indicator"></div>
+      </button>
+      <button class="tab-btn" onclick="switchTab('todos')">
+        <div class="tab-icon"><i class="fa-solid fa-square-check"></i></div>
+        <span class="tab-label">All Todos</span>
+        <div class="tab-indicator"></div>
+      </button>
+      <button class="tab-btn" onclick="switchTab('calendar')">
+        <div class="tab-icon"><i class="fa-regular fa-calendar"></i></div>
+        <span class="tab-label">Calendar</span>
+        <div class="tab-indicator"></div>
+      </button>
+      <button class="tab-btn" onclick="switchTab('statistics')">
+        <div class="tab-icon"><i class="fa-solid fa-chart-column"></i></div>
+        <span class="tab-label">Statistics</span>
+        <div class="tab-indicator"></div>
+      </button>
+      <button class="tab-btn" onclick="switchTab('settings')">
+        <div class="tab-icon"><i class="fa-solid fa-gear"></i></div>
+        <span class="tab-label">Settings</span>
+        <div class="tab-indicator"></div>
+      </button>
     </div>
 
-  </div><!-- /shell -->
-</div><!-- /shell-wrap -->
-
-<div class="shell-hint">📱 Scroll inside the phone · tap tabs to navigate</div>
+  </div>
+</div>
 
 <script>
-// ───────────────────────── DATA ─────────────────────────
+// ─── DATA ───
 const CATS = [
-  { id:'work',     name:'Work',     desc:'Professional tasks',  color:'#F59E0B', icon:'💼', tasks:3 },
-  { id:'personal', name:'Personal', desc:'Everyday life',        color:'#8B7CF6', icon:'🏠', tasks:2 },
-  { id:'health',   name:'Health',   desc:'Mind & body',          color:'#10B981', icon:'🏃', tasks:2 },
-  { id:'learning', name:'Learning', desc:'Skills & knowledge',   color:'#3B82F6', icon:'📚', tasks:1 },
-  { id:'finance',  name:'Finance',  desc:'Budget & payments',    color:'#F43F5E', icon:'💰', tasks:1 },
+  { id:'study-morning', name:'Study Morning', desc:'Studying in the morning', color:'#06B6D4', icon:'📖', done:0, total:5, archived:false },
+  { id:'tuition',       name:'Tuition',       desc:'To keep track',           color:'#8B7CF6', icon:'🎓', done:0, total:4, archived:false },
+  { id:'study-evening', name:'Study Evening', desc:'Studying in the evening', color:'#10B981', icon:'🌙', done:0, total:9, archived:false },
+  { id:'habit',         name:'Habit',         desc:'To fix habits',            color:'#F59E0B', icon:'✨', done:0, total:3, archived:false },
+  { id:'exam-prep',     name:'Exam Prep',     desc:'Archived category',        color:'#F43F5E', icon:'📝', done:2, total:6, archived:true  },
 ];
 
 const TASKS = [
-  { id:1, title:'Finish quarterly report',    desc:'Due end of sprint',       cat:'work',     status:'todo' },
-  { id:2, title:'Team standup',               desc:'9:00 AM – 15 min',        cat:'work',     status:'done' },
-  { id:3, title:'Review pull requests',       desc:'',                         cat:'work',     status:'todo' },
-  { id:4, title:'Buy groceries',              desc:'Milk, eggs, bread',        cat:'personal', status:'todo' },
-  { id:5, title:'Read 20 pages',              desc:'',                         cat:'personal', status:'done' },
-  { id:6, title:'Morning jog',               desc:'30 min / 5 km',            cat:'health',   status:'done' },
-  { id:7, title:'Drink 8 glasses of water',  desc:'Track throughout day',     cat:'health',   status:'todo' },
-  { id:8, title:'React Native deep-dive',    desc:'Finish sections 4–6',      cat:'learning', status:'na'   },
-  { id:9, title:'Pay electricity bill',      desc:'Before 15th',              cat:'finance',  status:'todo' },
+  { id:1,  title:'Complete chapter 5 notes',    desc:'Math chapter 5 revision',     cat:'study-morning', status:'todo' },
+  { id:2,  title:'Solve practice problems',     desc:'50 MCQs from question bank',  cat:'study-morning', status:'todo' },
+  { id:3,  title:'Review yesterday\'s topics',  desc:'',                             cat:'study-morning', status:'done' },
+  { id:4,  title:'Algebra homework',            desc:'Page 34–38 exercises',         cat:'tuition',       status:'todo' },
+  { id:5,  title:'Physics worksheet',           desc:'Chapter 7 problems',           cat:'tuition',       status:'todo' },
+  { id:6,  title:'Read biology notes',          desc:'Chapter 12 cell division',     cat:'study-evening', status:'todo' },
+  { id:7,  title:'Watch lecture recording',     desc:'Chem lecture 06',              cat:'study-evening', status:'todo' },
+  { id:8,  title:'10-minute meditation',        desc:'Before sleep routine',         cat:'habit',         status:'todo' },
+  { id:9,  title:'No social media after 10PM',  desc:'',                             cat:'habit',         status:'na'   },
 ];
 
 const EVENTS = [
-  { title:'Pay bills',          time:'10:00 AM', cat:'finance'  },
-  { title:'Doctor appointment', time:'2:30 PM',  cat:'health'   },
-  { title:'Sprint planning',    time:'4:00 PM',  cat:'work'     },
+  { title:'Tuition class',     time:'3:00 PM',  cat:'tuition'       },
+  { title:'Study group meet',  time:'5:30 PM',  cat:'study-evening' },
+  { title:'Review session',    time:'8:00 PM',  cat:'study-morning' },
 ];
 
-// ─────────────────── TODOS ───────────────────
-let activeStatus = 'todo', activeCat = 'all';
+function getCatMeta(id){ return CATS.find(c=>c.id===id)||{color:'#64748B',name:''} }
 
-function getCatMeta(id){ return CATS.find(c=>c.id===id)||{color:'#64748B',name:''}; }
+// ─── CATEGORIES ───
+let activeSeg = 'active';
+function makeCirc(done,total,color){
+  const r=22, circ=2*Math.PI*r;
+  const pct = total>0 ? done/total : 0;
+  const dash = pct*circ;
+  return `<svg width="52" height="52" viewBox="0 0 52 52">
+    <circle class="circ-bg" cx="26" cy="26" r="${r}"/>
+    <circle class="circ-fill" cx="26" cy="26" r="${r}" stroke="${color}"
+      stroke-dasharray="${dash} ${circ}" stroke-dashoffset="0"/>
+  </svg>`;
+}
+function renderCats(){
+  const active   = CATS.filter(c=>!c.archived);
+  const archived = CATS.filter(c=>c.archived);
+  document.getElementById('cat-active-list').innerHTML = active.map(c=>`
+    <div class="cat-card">
+      <div class="circ-wrap">${makeCirc(c.done,c.total,c.color)}<div class="circ-label">${c.total>0?Math.round(c.done/c.total*100):0}%</div></div>
+      <div class="cat-info"><div class="cat-name">${c.name}</div><div class="cat-desc">${c.desc}</div></div>
+      <div class="cat-right">
+        <div class="cat-count">${c.done}/${c.total}</div>
+        <div class="cat-archive-btn"><i class="fa-solid fa-box-archive"></i></div>
+      </div>
+    </div>`).join('');
+  document.getElementById('cat-archived-list').innerHTML = archived.map(c=>`
+    <div class="cat-card" style="opacity:.6;">
+      <div class="circ-wrap">${makeCirc(c.done,c.total,c.color)}<div class="circ-label">${c.total>0?Math.round(c.done/c.total*100):0}%</div></div>
+      <div class="cat-info"><div class="cat-name">${c.name}</div><div class="cat-desc">${c.desc}</div></div>
+      <div class="cat-right"><div class="cat-count">${c.done}/${c.total}</div><div class="cat-archive-btn"><i class="fa-solid fa-box-open"></i></div></div>
+    </div>`).join('');
+}
+function showSeg(seg,btn){
+  activeSeg=seg;
+  document.querySelectorAll('.seg-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('cat-active-list').style.display   = seg==='active'   ? 'block' : 'none';
+  document.getElementById('cat-archived-list').style.display = seg==='archived' ? 'block' : 'none';
+}
 
+// ─── TODOS ───
+let activeStatus='todo', activeCat='all';
 function renderTodos(){
-  const list = document.getElementById('todo-list');
-  const filtered = TASKS.filter(t => {
-    const sMatch = t.status === activeStatus;
-    const cMatch = activeCat==='all' || t.cat===activeCat;
-    return sMatch && cMatch;
+  const list=document.getElementById('todo-list');
+  const filtered=TASKS.filter(t=>{
+    const sMatch = t.status===activeStatus || (activeStatus==='na'&&t.status==='na');
+    const cMatch = activeCat==='all'||t.cat===activeCat;
+    return sMatch&&cMatch;
   });
   if(!filtered.length){
-    const labels = {todo:'Add a Todo',done:'Finished Tasks',na:'Not Available'};
-    const descs  = {todo:'Create a to-do to get started.',done:'Finished tasks will appear here.',na:'Tasks marked N/A appear here.'};
+    const labels={todo:'Add a Todo',done:'Finished Tasks',na:'Not Available'};
+    const descs={todo:'Create a to-do to get started.',done:'Finished tasks will appear here.',na:'Tasks marked N/A appear here.'};
     list.innerHTML=`<div class="empty"><i class="fa-regular fa-circle-check"></i><div class="empty-title">${labels[activeStatus]}</div><div class="empty-desc">${descs[activeStatus]}</div></div>`;
     return;
   }
-  list.innerHTML = filtered.map(t=>{
-    const cm = getCatMeta(t.cat);
-    const checkCls = t.status==='done'?'done':t.status==='na'?'na':'';
-    const titleCls = t.status==='done'?'done':t.status==='na'?'na':'';
+  list.innerHTML=filtered.map(t=>{
+    const cm=getCatMeta(t.cat);
+    const checkCls=t.status==='done'?'done':t.status==='na'?'na':'';
+    const titleCls=t.status==='done'?'done':t.status==='na'?'na':'';
     return `<div class="task-card">
       <div class="task-check ${checkCls}"></div>
       <div class="task-body">
@@ -619,7 +677,6 @@ function renderTodos(){
     </div>`;
   }).join('');
 }
-
 function filterTodos(status,btn){
   activeStatus=status;
   document.querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
@@ -629,83 +686,52 @@ function filterTodos(status,btn){
 function filterCat(cat,el){
   activeCat=cat;
   document.querySelectorAll('.cat-chip').forEach(c=>{
-    const isMe = c===el;
-    const cm = isMe&&cat!=='all' ? getCatMeta(cat) : null;
-    if(cat==='all'&&isMe){ c.style.background='var(--accent)';c.style.borderColor='var(--accent)';c.style.color='#fff'; }
-    else if(isMe&&cm){ c.style.background=cm.color;c.style.borderColor=cm.color;c.style.color='#fff'; }
-    else { c.style.background='transparent';c.style.borderColor='var(--border)';c.style.color='var(--text2)'; }
+    const me=c===el; const cm=me&&cat!=='all'?getCatMeta(cat):null;
+    if(cat==='all'&&me){c.style.background='var(--accent)';c.style.borderColor='var(--accent)';c.style.color='#fff';}
+    else if(me&&cm){c.style.background=cm.color;c.style.borderColor=cm.color;c.style.color='#fff';}
+    else{c.style.background='transparent';c.style.borderColor='var(--border)';c.style.color='var(--text2)';}
   });
   renderTodos();
 }
 
-// ─────────────────── CATEGORIES ───────────────────
-function renderCats(){
-  document.getElementById('cat-list').innerHTML = CATS.map(c=>`
-    <div class="cat-card">
-      <div class="cat-icon-wrap" style="background:${c.color}22;">${c.icon}</div>
-      <div class="cat-info">
-        <div class="cat-name">${c.name}</div>
-        <div class="cat-desc">${c.desc}</div>
-      </div>
-      <div style="text-align:right;">
-        <div class="cat-count">${c.tasks} tasks</div>
-      </div>
-      <i class="fa-solid fa-chevron-right cat-chevron"></i>
-    </div>
-  `).join('');
-}
-
-// ─────────────────── CALENDAR ───────────────────
-let calDate = new Date();
-
+// ─── CALENDAR ───
+let calDate=new Date();
 function renderCal(){
-  const y=calDate.getFullYear(), m=calDate.getMonth();
-  document.getElementById('cal-month-label').textContent =
-    calDate.toLocaleDateString('en',{month:'long',year:'numeric'});
-
-  const first = new Date(y,m,1).getDay();
-  const days  = new Date(y,m+1,0).getDate();
-  const today = new Date();
-  const dows  = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  const eventDays = [today.getDate()];
-
-  let html = dows.map(d=>`<div class="cal-dow">${d}</div>`).join('');
-  for(let i=0;i<first;i++) html+=`<div class="cal-day other-month">${new Date(y,m,0).getDate()-first+i+1}</div>`;
+  const y=calDate.getFullYear(),m=calDate.getMonth();
+  document.getElementById('cal-month-label').textContent=calDate.toLocaleDateString('en',{month:'long',year:'numeric'});
+  const first=new Date(y,m,1).getDay(), days=new Date(y,m+1,0).getDate();
+  const today=new Date(), prevDays=new Date(y,m,0).getDate();
+  const dows=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  let html=dows.map(d=>`<div class="cal-dow">${d}</div>`).join('');
+  for(let i=0;i<first;i++) html+=`<div class="cal-day dim">${prevDays-first+i+1}</div>`;
   for(let d=1;d<=days;d++){
-    const isToday = d===today.getDate()&&m===today.getMonth()&&y===today.getFullYear();
-    const hasEv   = eventDays.includes(d) && isToday;
-    html+=`<div class="cal-day${isToday?' today':''}${hasEv?' has-event':''}">${d}</div>`;
+    const isToday=d===today.getDate()&&m===today.getMonth()&&y===today.getFullYear();
+    const hasDot=[today.getDate()].includes(d)&&m===today.getMonth()&&y===today.getFullYear();
+    html+=`<div class="cal-day${isToday?' today':''}${hasDot?' has-dot':''}">${d}</div>`;
   }
-  document.getElementById('cal-grid').innerHTML = html;
-
-  document.getElementById('event-list').innerHTML = EVENTS.map(e=>{
+  document.getElementById('cal-grid').innerHTML=html;
+  document.getElementById('event-list').innerHTML=EVENTS.map(e=>{
     const cm=getCatMeta(e.cat);
     return `<div class="event-item">
       <div class="event-dot" style="background:${cm.color};"></div>
-      <div class="event-info">
-        <div class="event-title">${e.title}</div>
-        <div class="event-time">${e.time}</div>
-      </div>
-      <i class="fa-solid fa-chevron-right" style="color:var(--text3);font-size:12px;"></i>
+      <div style="flex:1;"><div class="event-title">${e.title}</div><div class="event-time">${e.time}</div></div>
+      <i class="fa-solid fa-chevron-right" style="color:var(--text3);font-size:11px;"></i>
     </div>`;
   }).join('');
 }
+function shiftMonth(dir){calDate.setMonth(calDate.getMonth()+dir);renderCal();}
 
-function shiftMonth(dir){ calDate.setMonth(calDate.getMonth()+dir); renderCal(); }
-
-// ─────────────────── STATISTICS ───────────────────
-const periods = { today:{done:4,missed:2,na:1}, week:{done:22,missed:8,na:3}, month:{done:87,missed:19,na:7} };
-let curPeriod = 'today';
-
+// ─── STATISTICS ───
+const periods={today:{done:4,missed:2,na:1},week:{done:22,missed:8,na:3},month:{done:87,missed:19,na:7}};
+let curPeriod='today';
 function renderStats(){
-  const p = periods[curPeriod];
-  const comp = Math.round(p.done/(p.done+p.missed)*100)||0;
-  document.getElementById('stats-grid').innerHTML = `
-    <div class="stat-box"><div class="stat-icon-wrap" style="background:rgba(139,124,246,.15);"><i class="fa-solid fa-check-double" style="color:var(--accent);"></i></div><div class="stat-val">${p.done}</div><div class="stat-lbl">Done</div></div>
-    <div class="stat-box"><div class="stat-icon-wrap" style="background:rgba(244,63,94,.15);"><i class="fa-solid fa-xmark" style="color:var(--red);"></i></div><div class="stat-val">${p.missed}</div><div class="stat-lbl">Did Not Do</div></div>
-    <div class="stat-box"><div class="stat-icon-wrap" style="background:rgba(100,116,139,.15);"><i class="fa-solid fa-eye-slash" style="color:var(--text3);"></i></div><div class="stat-val">${p.na}</div><div class="stat-lbl">Not Available</div></div>
-    <div class="stat-box"><div class="stat-icon-wrap" style="background:rgba(245,158,11,.15);"><i class="fa-solid fa-arrow-trend-up" style="color:var(--yellow);"></i></div><div class="stat-val">${comp}%</div><div class="stat-lbl">Completion</div></div>
-  `;
+  const p=periods[curPeriod];
+  const comp=Math.round(p.done/(p.done+p.missed)*100)||0;
+  document.getElementById('stats-grid').innerHTML=`
+    <div class="stat-box"><div class="stat-icon-wrap" style="background:rgba(6,182,212,.12);"><i class="fa-solid fa-check-double" style="color:var(--accent);"></i></div><div class="stat-val">${p.done}</div><div class="stat-lbl">Done</div></div>
+    <div class="stat-box"><div class="stat-icon-wrap" style="background:rgba(244,63,94,.12);"><i class="fa-solid fa-xmark" style="color:var(--red);"></i></div><div class="stat-val">${p.missed}</div><div class="stat-lbl">Did Not Do</div></div>
+    <div class="stat-box"><div class="stat-icon-wrap" style="background:rgba(100,116,139,.12);"><i class="fa-solid fa-eye-slash" style="color:var(--text3);"></i></div><div class="stat-val">${p.na}</div><div class="stat-lbl">Not Available</div></div>
+    <div class="stat-box"><div class="stat-icon-wrap" style="background:rgba(245,158,11,.12);"><i class="fa-solid fa-arrow-trend-up" style="color:var(--yellow);"></i></div><div class="stat-val">${comp}%</div><div class="stat-lbl">Completion</div></div>`;
 }
 function setPeriod(p,btn){
   curPeriod=p;
@@ -713,59 +739,39 @@ function setPeriod(p,btn){
   btn.classList.add('active');
   renderStats();
 }
-
-function renderWeekBars(){
-  const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-  const vals=[3,5,2,7,4,6,3];
-  const max=Math.max(...vals);
-  document.getElementById('week-bars').innerHTML = days.map((d,i)=>`
-    <div class="bar-wrap">
-      <div class="bar-track"><div class="bar-fill" style="height:${vals[i]/max*100}%;"></div></div>
-      <span class="bar-lbl">${d}</span>
-    </div>`).join('');
-
-  document.getElementById('weekly-bars').innerHTML = days.map((d,i)=>`
-    <div class="bar-wrap">
-      <div class="bar-track"><div class="bar-fill" style="height:${vals[i]/max*100}%;"></div></div>
-      <span class="bar-lbl">${d}</span>
-    </div>`).join('');
-}
-
-function renderHeatmap(){
+function renderCharts(){
+  const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],vals=[3,5,2,7,4,6,3],max=Math.max(...vals);
+  const barHtml=days.map((d,i)=>`<div class="bar-wrap"><div class="bar-track"><div class="bar-fill" style="height:${vals[i]/max*100}%;"></div></div><span class="bar-lbl">${d}</span></div>`).join('');
+  document.getElementById('week-bars').innerHTML=barHtml;
+  document.getElementById('weekly-bars').innerHTML=barHtml;
+  // heatmap month label
   const now=new Date();
-  document.getElementById('heat-month').textContent=
-    now.toLocaleDateString('en',{month:'short',year:'numeric'});
+  document.getElementById('heat-month').textContent=now.toLocaleDateString('en',{month:'short',year:'numeric'});
   // dow labels
-  const dows=['S','M','T','W','T','F','S'];
-  document.getElementById('dow-labels').innerHTML=dows.map(d=>`<div style="text-align:center;font-size:10px;color:var(--text3);font-weight:600;">${d}</div>`).join('');
-  // heatmap cells (42 cells)
+  document.getElementById('dow-labels').innerHTML=['S','M','T','W','T','F','S'].map(d=>`<div style="text-align:center;font-size:9px;color:var(--text3);font-weight:600;">${d}</div>`).join('');
+  // heatmap
   const lvls=['','','l1','l2','l3','l4','l2','l1','','l3','l4','l2','','l1','','l3'];
   document.getElementById('heatmap').innerHTML=Array.from({length:42},(_,i)=>`<div class="heat-cell ${lvls[i%lvls.length]}"></div>`).join('');
   // hourly
   const hourly=[0,0,0,0,0,0,1,2,3,2,1,0,1,2,1,0,0,1,2,3,2,1,0,0];
-  document.getElementById('hourly-heatmap').innerHTML=hourly.map(v=>{
-    const cls=v===0?'':v===1?'l1':v===2?'l2':'l3';
-    return `<div class="heat-cell ${cls}"></div>`;
-  }).join('');
+  document.getElementById('hourly-heatmap').innerHTML=hourly.map(v=>`<div class="heat-cell ${v===0?'':v===1?'l1':v===2?'l2':'l3'}"></div>`).join('');
 }
 
-// ─────────────────── TAB SWITCHER ───────────────────
+// ─── TAB SWITCHER ───
+const tabMap={categories:0,todos:1,calendar:2,statistics:3,settings:4};
 function switchTab(name){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('screen-'+name).classList.add('active');
-  const btns=[...document.querySelectorAll('.tab-btn')];
-  const map={categories:0,todos:1,calendar:2,statistics:3,settings:4};
-  btns[map[name]].classList.add('active');
+  document.querySelectorAll('.tab-btn')[tabMap[name]].classList.add('active');
 }
 
-// ─────────────────── INIT ───────────────────
-renderTodos();
+// ─── INIT ───
 renderCats();
+renderTodos();
 renderCal();
 renderStats();
-renderWeekBars();
-renderHeatmap();
+renderCharts();
 </script>
 </body>
 </html>
